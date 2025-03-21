@@ -1,0 +1,26 @@
+# Konfigurasi Cloudflare Pages untuk website portfolio
+name = "januar-portfolio"
+compatibility_date = "2023-04-20"
+compatibility_flags = ["nodejs_compat"]
+
+# Main configuration
+main = ".next/standalone/server.js"
+usage_model = "bundled"
+workers_dev = true
+
+# Konfigurasi build
+build = { command = "npm run build", cwd = ".", dest = ".next" }
+
+# Konfigurasi variabel lingkungan
+[vars]
+NEXT_PUBLIC_EMAILJS_SERVICE_ID = "service_5mk1t2z"
+NEXT_PUBLIC_EMAILJS_TEMPLATE_ID = "template_yj3blyg"
+NEXT_PUBLIC_EMAILJS_USER_ID = "WrdMD5erXU1TjP0SR"
+
+# Konfigurasi untuk Next.js
+[build.upload]
+format = "service-worker"
+
+# Konfigurasi untuk Node.js
+[node_compat]
+enabled = true 

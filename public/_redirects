@@ -1,0 +1,2 @@
+# Redirect semua request ke index.html untuk mendukung navigasi SPA/CSR
+/* /index.html 200 

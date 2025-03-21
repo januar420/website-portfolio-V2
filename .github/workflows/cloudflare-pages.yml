@@ -1,0 +1,65 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main  # Atau branch lain yang Anda gunakan sebagai default
+  workflow_dispatch:  # Memungkinkan trigger manual dari GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    
+    # Gunakan variabel environment untuk menghindari peringatan linting
+    env:
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+        
+      - name: Build website
+        run: npm run build
+        env:
+          # Menggunakan nilai default
+          NEXT_PUBLIC_EMAILJS_SERVICE_ID: service_5mk1t2z
+          NEXT_PUBLIC_EMAILJS_TEMPLATE_ID: template_yj3blyg
+          NEXT_PUBLIC_EMAILJS_USER_ID: WrdMD5erXU1TjP0SR
+      
+      # Periksa ketersediaan token dan account ID secara eksplisit
+      - name: Verify Cloudflare credentials
+        id: verify-credentials
+        run: |
+          if [ -z "$CF_API_TOKEN" ] || [ -z "$CF_ACCOUNT_ID" ]; then
+            echo "::warning::Salah satu atau kedua kredensial Cloudflare tidak ditemukan. Deployment akan dilewati."
+            echo "has_credentials=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_credentials=true" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Publish to Cloudflare Pages
+        if: steps.verify-credentials.outputs.has_credentials == 'true'
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ env.CF_API_TOKEN }}
+          accountId: ${{ env.CF_ACCOUNT_ID }}
+          projectName: januar-portfolio  # Ganti dengan nama proyek Cloudflare Pages Anda
+          directory: .next
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          branch: main  # Branch untuk development/production
+          # Uncomment jika Anda ingin memberi custom nama pada deployment:
+          # wranglerVersion: '3.0.0'
+          # deploymentName: 'Januar Portfolio' 

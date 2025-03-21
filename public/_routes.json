@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "description": "Konfigurasi routing untuk Januar Portfolio di Cloudflare Pages",
+  "include": [
+    "/*"
+  ],
+  "exclude": [
+    "/api/*",
+    "/images/*",
+    "/static/*"
+  ],
+  "routes": [
+    {
+      "src": "^/api/.*$",
+      "dest": "/api/$1",
+      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    },
+    {
+      "src": "^/images/.*\\.(jpg|jpeg|png|gif|webp|svg|ico)$",
+      "dest": "/images/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "^/static/.*$",
+      "dest": "/static/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "^/.*\\.(js|css)$",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "^/.*\\.(jpg|jpeg|png|gif|webp|svg|ico)$",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "^/.*$",
+      "dest": "/index.html",
+      "status": 200
+    }
+  ]
+} 

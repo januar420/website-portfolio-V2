@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "property-no-unknown": [
+      true,
+      {
+        "ignoreProperties": [
+          "supported-color-schemes",
+          "mso-table-lspace",
+          "mso-table-rspace",
+          "mso-padding-alt",
+          "mso-text-raise",
+          "color-scheme"
+        ]
+      }
+    ]
+  }
+} 
