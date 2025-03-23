@@ -314,17 +314,56 @@ export default function CertificationSection() {
         console.log("Using corrected filename for Network Security:", finalFilename);
       }
       
+      // Tentukan URL dasar berdasarkan environment
+      let baseUrl = '';
+      
+      // Jika running di browser
+      if (typeof window !== 'undefined') {
+        // Gunakan host dan protocol yang sama dengan halaman saat ini
+        const { protocol, hostname } = window.location;
+        const port = window.location.port || (protocol === 'https:' ? '443' : '80');
+        baseUrl = `${protocol}//${hostname}:${port}`;
+      }
+      
       // Buat URL untuk API route
-      const pdfPath = `/api/pdf?file=${encodeURIComponent(finalFilename)}`;
+      const pdfPath = `${baseUrl}/api/pdf?file=${encodeURIComponent(finalFilename)}`;
       console.log("Opening PDF with API route:", pdfPath);
+      
+      // Fallback untuk port 3001 jika ada masalah dengan port default
+      const tryAlternativePort = (err: any) => {
+        console.warn("Error opening PDF with default port, trying alternative port:", err);
+        const altPort = window.location.port === '3000' ? '3001' : '3000';
+        const { protocol, hostname } = window.location;
+        const altPdfPath = `${protocol}//${hostname}:${altPort}/api/pdf?file=${encodeURIComponent(finalFilename)}`;
+        console.log("Trying alternative port:", altPdfPath);
+        window.open(altPdfPath, '_blank');
+      };
       
       if (isDialogOpen) {
         setIsDialogOpen(false);
         setTimeout(() => {
-          window.open(pdfPath, '_blank');
+          try {
+            const newWindow = window.open(pdfPath, '_blank');
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+              // Popup was blocked or failed
+              console.warn("Primary window open failed, trying alternative port");
+              tryAlternativePort(new Error("Window open failed or was blocked"));
+            }
+          } catch (err) {
+            tryAlternativePort(err);
+          }
         }, 300);
       } else {
-        window.open(pdfPath, '_blank');
+        try {
+          const newWindow = window.open(pdfPath, '_blank');
+          if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+            // Popup was blocked or failed
+            console.warn("Primary window open failed, trying alternative port");
+            tryAlternativePort(new Error("Window open failed or was blocked"));
+          }
+        } catch (err) {
+          tryAlternativePort(err);
+        }
       }
     } catch (error) {
       console.error('Error opening PDF file:', error);

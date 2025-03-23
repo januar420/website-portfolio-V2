@@ -5,6 +5,33 @@
  * Januar Galuh Prabakti
  */
 
+// Mengambil daftar route yang diabaikan dari file konfigurasi
+// Route yang diabaikan hanya berlaku saat menggunakan output: 'export'
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Mendapatkan __dirname dalam ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Cek konfigurasi GitHub Pages
+const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+
+// Cek apakah file rsc-ignored.js ada
+let ignoredRoutes = [];
+try {
+  const rscIgnoredPath = path.join(__dirname, 'scripts', 'rsc-ignored.js');
+  if (fs.existsSync(rscIgnoredPath)) {
+    const { ignoredRoutes: ignored } = await import('./scripts/rsc-ignored.js');
+    ignoredRoutes = ignored || [];
+    console.log('✅ Using ignored routes configuration:', ignoredRoutes);
+  }
+} catch (e) {
+  console.warn('⚠️ Failed to load rsc-ignored.js:', e.message);
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -14,7 +41,45 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    unoptimized: isGitHubPages,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'plus.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.imgur.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'imgur.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'github.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'google.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
   // Konfigurasi untuk development behavior
   reactStrictMode: false,
@@ -25,8 +90,26 @@ const nextConfig = {
   // Server external packages - memindahkan three ke sini dari serverComponentsExternalPackages
   serverExternalPackages: ['three'],
   
-  // Mengatasi masalah symlink pada Windows
-  output: 'standalone',
+  // Output mode
+  output: isGitHubPages ? 'export' : 'standalone',
+  
+  // Konfigurasi khusus untuk GitHub Pages
+  ...(isGitHubPages ? {
+    basePath: '/portfolio-website',
+    assetPrefix: '/portfolio-website/',
+    distDir: 'out',
+    trailingSlash: true,
+    
+    // Pindahkan outputFileTracing ke root config
+    outputFileTracingRoot: path.join(__dirname, '../'),
+    outputFileTracingExcludes: {
+      '*': [
+        'node_modules/@swc/core-win32-x64-msvc',
+        'node_modules/next/dist/compiled/@napi-rs',
+        'node_modules/.pnpm',
+      ],
+    },
+  } : {}),
   
   // Membuat ID build yang stabil
   generateBuildId: async () => {
@@ -38,12 +121,15 @@ const nextConfig = {
   
   // Konfigurasi experimental yang didukung
   experimental: {
-    // Fitur performance yang didukung
-    serverActions: {
-      bodySizeLimit: '4mb', // Meningkatkan batas ukuran untuk server actions
-    },
-    // WebGL dan 3D optimizations
+    // Umum untuk semua mode
     optimizePackageImports: ['@react-three/fiber', '@react-three/drei'],
+    
+    // Khusus untuk non-GitHub Pages
+    ...(isGitHubPages ? {} : {
+      serverActions: {
+        bodySizeLimit: '4mb',
+      },
+    }),
   },
   
   // Konfigurasi webpack tambahan untuk three.js
@@ -98,18 +184,32 @@ const nextConfig = {
       poll: 1000,
     };
 
+    // Mematikan symlink di file cache webpack untuk Windows
+    if (process.platform === 'win32') {
+      config.resolve.symlinks = false;
+      config.watchOptions.followSymlinks = false;
+      config.node = {
+        ...config.node,
+        __filename: true,
+        __dirname: true,
+      };
+    }
+
     return config;
   },
   
-  // Konfigurasi untuk asset files
-  async rewrites() {
-    return [
-      {
-        source: '/CERTIFICATION CYBER SECURITY/:path*',
-        destination: '/api/serve-certification?path=:path*',
-      },
-    ];
-  },
+  // Konfigurasi untuk GitHub Pages tidak menggunakan rewrites
+  ...(isGitHubPages ? {} : {
+    // Konfigurasi untuk asset files di development dan production non-GitHub
+    async rewrites() {
+      return [
+        {
+          source: '/CERTIFICATION CYBER SECURITY/:path*',
+          destination: '/api/serve-certification?path=:path*',
+        },
+      ];
+    },
+  }),
 }
 
 // Ekspor konfigurasi final untuk portfolio Januar Galuh Prabakti

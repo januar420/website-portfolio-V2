@@ -31,6 +31,17 @@ function copyIndexTo404() {
   }
 }
 
+// Fungsi untuk membuat file CNAME jika ingin menggunakan custom domain
+// Uncomment dan sesuaikan domain jika diperlukan
+function createCnameFile() {
+  // Jika Anda memiliki custom domain, uncomment dan ganti domain di bawah
+  // const filePath = path.join(outputDir, 'CNAME');
+  // fs.writeFileSync(filePath, 'yourdomain.com');
+  // console.log('✅ File CNAME dibuat dengan domain: yourdomain.com');
+  
+  console.log('ℹ️ File CNAME tidak dibuat. Uncomment fungsi di prepare-gh-pages.js jika Anda ingin menggunakan custom domain.');
+}
+
 // Eksekusi fungsi utama
 function main() {
   console.log('🔍 Mempersiapkan output untuk GitHub Pages...');
@@ -44,6 +55,7 @@ function main() {
   // Jalankan fungsi-fungsi
   createNojekyllFile();
   copyIndexTo404();
+  createCnameFile();  // Uncomment jika Anda ingin membuat file CNAME
   
   console.log('✨ Persiapan untuk GitHub Pages selesai!');
 }

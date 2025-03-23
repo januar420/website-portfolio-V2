@@ -47,7 +47,7 @@ const skillsData = [
   {
     subject: "System Security",
     subjectKey: "skills.security",
-    A: 65,
+    A: 85,
     fullMark: 100,
     description: "Implementation of security measures and protocols",
     descriptionKey: "skills.security.description",
@@ -96,7 +96,7 @@ const progressData = [
 
 const categoryData = [
   { name: "System Administration", value: 80 },
-  { name: "Security Implementation", value: 65 },
+  { name: "Security Implementation", value: 85 },
   { name: "Virtualization", value: 80 },
   { name: "Documentation", value: 90 },
   { name: "Automation", value: 70 },

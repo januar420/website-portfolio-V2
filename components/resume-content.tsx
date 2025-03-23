@@ -331,17 +331,53 @@ export default function ResumeContent() {
 
   const certifications = [
     {
-      name: "Linux Essentials",
-      issuer: "Self-Learning",
-      date: "2022",
-      description: "Penguasaan dasar-dasar sistem operasi Linux dan administrasi",
+      name: "Certified Network Security Practitioner (CNSP)",
+      issuer: "The SecOps Group",
+      date: "2025",
+      description: "Sertifikasi profesional dalam praktik keamanan jaringan yang mencakup prinsip-prinsip dasar keamanan jaringan, protokol, dan teknik-teknik perlindungan infrastruktur jaringan.",
     },
     {
-      name: "Cybersecurity Fundamentals",
-      issuer: "Online Learning Platform",
-      date: "2023",
-      description: "Pemahaman prinsip dasar keamanan siber dan praktik terbaik",
+      name: "CC Certified in Cybersecurity (CC)",
+      issuer: "(ISC)²",
+      date: "2025",
+      description: "Sertifikat keahlian dalam dasar-dasar dan implementasi keamanan siber yang fokus pada perlindungan sistem, aplikasi, dan infrastruktur TI dari berbagai ancaman keamanan.",
     },
+    {
+      name: "CC Course Conclusion & Final Assessment",
+      issuer: "(ISC)²",
+      date: "2025",
+      description: "Sertifikasi penyelesaian kursus keamanan siber yang mencakup prinsip-prinsip fundamental dalam mengidentifikasi, mencegah, dan menanggapi ancaman keamanan siber.",
+    },
+    {
+      name: "CC Domain 5: Security Operations",
+      issuer: "(ISC)²",
+      date: "2024",
+      description: "Sertifikasi dalam operasi keamanan yang membekali profesional dengan keterampilan untuk mengidentifikasi, menganalisis, dan merespon ancaman keamanan melalui prosedur operasional.",
+    },
+    {
+      name: "CC Domain 4: Network Security",
+      issuer: "(ISC)²",
+      date: "2024",
+      description: "Sertifikasi dalam keamanan jaringan yang mencakup metodologi, protokol, dan teknik untuk mengamankan infrastruktur jaringan dan melindungi dari serangan berbasis jaringan.",
+    },
+    {
+      name: "CC Domain 3: Access Control Concepts",
+      issuer: "(ISC)²",
+      date: "2024",
+      description: "Sertifikasi dalam konsep kontrol akses yang berfokus pada prinsip, mekanisme, dan praktik terbaik dalam mengelola akses ke sistem dan sumber daya informasi.",
+    },
+    {
+      name: "CC Domain 2: Incident Response",
+      issuer: "(ISC)²",
+      date: "2023",
+      description: "Sertifikasi dalam respons insiden dan kelangsungan bisnis yang berfokus pada metodologi untuk penanganan insiden yang efektif dan perencanaan pemulihan bencana.",
+    },
+    {
+      name: "CC Domain 1: Security Principles",
+      issuer: "(ISC)²",
+      date: "2023",
+      description: "Sertifikasi dalam prinsip-prinsip keamanan dasar yang membentuk fondasi untuk memahami dan menerapkan praktik dan strategi keamanan siber.",
+    }
   ]
 
   const projects = [

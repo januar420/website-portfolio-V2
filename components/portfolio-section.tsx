@@ -17,6 +17,28 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
+// Fungsi untuk memvalidasi URL gambar
+const isValidImageUrl = (url: string): boolean => {
+  // Daftar hostname yang diizinkan
+  const allowedHostnames = [
+    'images.unsplash.com',
+    'plus.unsplash.com',
+    'i.imgur.com',
+    'imgur.com',
+    'github.com',
+    'githubusercontent.com',
+    'raw.githubusercontent.com',
+    'google.com'
+  ]
+  
+  try {
+    const urlObj = new URL(url)
+    return allowedHostnames.some(host => urlObj.hostname === host || urlObj.hostname.endsWith(`.${host}`))
+  } catch {
+    return false
+  }
+}
+
 // Enhanced project data with more details
 const projects = [
   {
@@ -409,7 +431,11 @@ export default function PortfolioSection() {
                             </Badge>
                           </div>
                           <Image
-                            src={project.image || "/placeholder.svg"}
+                            src={
+                              project.image && project.image.startsWith('http') 
+                              ? (isValidImageUrl(project.image) ? project.image : "/placeholder.svg") 
+                              : (project.image || "/placeholder.svg")
+                            }
                             alt={project.title}
                             width={800}
                             height={600}
@@ -420,6 +446,14 @@ export default function PortfolioSection() {
                             }}
                             sizes="(max-width: 768px) 100vw, 50vw"
                             priority={index === 0}
+                            unoptimized={project.image?.startsWith('http')}
+                            onError={() => {
+                              const imgElement = document.getElementById(`project-img-${project.id}`);
+                              if (imgElement) {
+                                imgElement.setAttribute('src', '/placeholder.svg');
+                              }
+                            }}
+                            id={`project-img-${project.id}`}
                           />
                         </div>
                         <div>
