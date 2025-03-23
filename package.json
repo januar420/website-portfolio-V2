@@ -27,7 +27,9 @@
     "prepare-gh-pages": "node scripts/prepare-gh-pages.js",
     "deploy:gh-pages": "npm run clean && npm run export:gh-pages && npm run prepare-gh-pages && npx gh-pages -d out",
     "deploy:cloudflare": "npm run build && npx wrangler pages deploy .next",
-    "dev:cloudflare": "npx wrangler pages dev .next --port 8788"
+    "dev:cloudflare": "npx wrangler pages dev .next --port 8788",
+    "deploy:netlify": "npm run build && npx netlify deploy",
+    "deploy:netlify-prod": "npm run build && npx netlify deploy --prod"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -106,6 +108,7 @@
     "file-loader": "^6.2.0",
     "gh-pages": "^6.3.0",
     "netlify-cli": "^19.0.3",
+    "pnpm": "^10.6.5",
     "postcss": "^8.5.3",
     "typescript": "^5.8.2",
     "wrangler": "^4.4.0"

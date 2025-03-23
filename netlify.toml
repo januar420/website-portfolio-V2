@@ -3,9 +3,11 @@
   publish = ".next"
 
 [build.environment]
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  NETLIFY_NEXT_PLUGIN_SKIP = "false"
   NODE_VERSION = "20.12.0"
   NPM_VERSION = "10.5.0"
+  USE_NPM_INSTALL = "true"
+  NPM_FLAGS = "--legacy-peer-deps"
 
 [dev]
   command = "npm run dev"
@@ -15,8 +17,5 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Redirects untuk mendukung routing SPA
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200 
+# Hapus redirects SPA karena Next.js menggunakan sistem routing sendiri
+# dan plugin @netlify/plugin-nextjs sudah menangani ini 
