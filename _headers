@@ -1,0 +1,17 @@
+# Caching untuk aset statis Next.js
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Caching untuk font
+/_next/static/media/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Caching untuk gambar
+/_next/image*
+  Cache-Control: public, max-age=31536000, stale-while-revalidate=60
+
+# Secuirty headers
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block 

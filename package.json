@@ -28,8 +28,7 @@
     "deploy:gh-pages": "npm run clean && npm run export:gh-pages && npm run prepare-gh-pages && npx gh-pages -d out",
     "deploy:cloudflare": "npm run build && npx wrangler pages deploy .next",
     "dev:cloudflare": "npx wrangler pages dev .next --port 8788",
-    "deploy:netlify": "npm run build && npx netlify deploy",
-    "deploy:netlify-prod": "npm run build && npx netlify deploy --prod"
+    "deploy:netlify": "npm run build && npx netlify deploy --prod"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
