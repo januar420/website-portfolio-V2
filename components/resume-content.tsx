@@ -33,110 +33,31 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DownloadCVButton from "./download-cv-button"
 
-// Function untuk menghasilkan gambar abstrak yang berbeda-beda
+// Function untuk menghasilkan gambar abstrak yang berbeda-beda - disederhanakan
 function generateAbstractBackgroundImage(width = 1200, height = 600, seed = Math.random() * 1000) {
-  // Function ini hanya berjalan di client-side
+  // Gunakan placeholder jika di server-side
   if (typeof window === 'undefined') return '';
   
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  
-  if (!ctx) return '';
-  
-  // Warna yang cocok dengan tema primary
-  const colors = [
-    'rgba(59, 130, 246, 0.7)',  // Biru
-    'rgba(139, 92, 246, 0.7)',   // Ungu
-    'rgba(236, 72, 153, 0.7)',   // Merah muda
-    'rgba(14, 165, 233, 0.7)',   // Cyan
-    'rgba(16, 185, 129, 0.7)',   // Hijau
-  ];
-  
-  // Background gradient
-  const grd = ctx.createLinearGradient(0, 0, width, height);
-  grd.addColorStop(0, colors[Math.floor(Math.random() * colors.length)]);
-  grd.addColorStop(1, colors[Math.floor(Math.random() * colors.length)]);
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, width, height);
-  
-  // Tambahkan bentuk abstrak
-  const numShapes = 50;
-  
-  for (let i = 0; i < numShapes; i++) {
-    const randomX = Math.random() * width;
-    const randomY = Math.random() * height;
-    const randomSize = Math.random() * 200 + 50;
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  try {
+    // Menggunakan pendekatan CSS gradients daripada canvas untuk menghindari masalah
+    const colors = [
+      'rgba(59, 130, 246, 0.7)',  // Biru
+      'rgba(139, 92, 246, 0.7)',   // Ungu
+      'rgba(236, 72, 153, 0.7)',   // Merah muda
+      'rgba(14, 165, 233, 0.7)',   // Cyan
+      'rgba(16, 185, 129, 0.7)',   // Hijau
+    ];
     
-    // Pilih bentuk acak (lingkaran, oval, atau bentuk abstrak)
-    const shapeType = Math.floor(Math.random() * 3);
+    // Pilih dua warna acak untuk gradient
+    const color1 = colors[Math.floor(Math.random() * colors.length)];
+    const color2 = colors[Math.floor(Math.random() * colors.length)];
     
-    ctx.globalAlpha = 0.4;
-    ctx.fillStyle = randomColor;
-    
-    if (shapeType === 0) {
-      // Lingkaran
-      ctx.beginPath();
-      ctx.arc(randomX, randomY, randomSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (shapeType === 1) {
-      // Oval
-      ctx.beginPath();
-      ctx.ellipse(
-        randomX, 
-        randomY, 
-        randomSize / 2, 
-        randomSize / 4, 
-        Math.random() * Math.PI, 
-        0, 
-        Math.PI * 2
-      );
-      ctx.fill();
-    } else {
-      // Bentuk abstrak (kurva Bezier)
-      ctx.beginPath();
-      ctx.moveTo(randomX, randomY);
-      ctx.bezierCurveTo(
-        randomX + randomSize / 2, 
-        randomY + randomSize / 2, 
-        randomX - randomSize / 2, 
-        randomY + randomSize / 2, 
-        randomX, 
-        randomY + randomSize
-      );
-      ctx.bezierCurveTo(
-        randomX - randomSize / 2, 
-        randomY + randomSize / 2, 
-        randomX + randomSize / 2, 
-        randomY - randomSize / 2, 
-        randomX, 
-        randomY
-      );
-      ctx.fill();
-    }
+    // Buat gradient CSS daripada menggunakan canvas
+    return `linear-gradient(135deg, ${color1}, ${color2})`;
+  } catch (error) {
+    console.error("Error generating background:", error);
+    return '';
   }
-  
-  // Efek blur untuk memberikan tampilan seperti gradient
-  ctx.filter = 'blur(40px)';
-  ctx.globalAlpha = 0.5;
-  ctx.drawImage(canvas, 0, 0);
-  
-  // Reset filter
-  ctx.filter = 'none';
-  
-  // Tambahkan noise untuk tekstur
-  for (let x = 0; x < width; x += 4) {
-    for (let y = 0; y < height; y += 4) {
-      if (Math.random() > 0.95) {
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
-        ctx.fillRect(x, y, 2, 2);
-      }
-    }
-  }
-  
-  return canvas.toDataURL('image/png');
 }
 
 export default function ResumeContent() {
@@ -171,7 +92,7 @@ export default function ResumeContent() {
     // Cek jika sudah ada background yang di-generate, jangan generate ulang
     if (!generatedBackground) {
       try {
-        const backgroundImage = generateAbstractBackgroundImage(1200, 600);
+        const backgroundImage = generateAbstractBackgroundImage();
         setGeneratedBackground(backgroundImage);
       } catch (error) {
         console.error("Error generating background:", error);
@@ -454,7 +375,7 @@ export default function ResumeContent() {
         <div
           className="absolute inset-0 bg-cover bg-center opacity-40 z-[3]"
           style={{
-            backgroundImage: generatedBackground ? `url(${generatedBackground})` : "url('/placeholder.svg?height=1000&width=2000')",
+            background: generatedBackground,
             transform: "translateY(var(--scroll-offset, 0px)) scale(1.1)",
             filter: "contrast(1.2) brightness(0.8)"
           }}
@@ -1081,100 +1002,100 @@ export default function ResumeContent() {
       >
         <div className="flex items-center mb-12">
           <div className="h-px flex-grow bg-gradient-to-r from-transparent to-primary/50"></div>
-          <h2 className="text-3xl md:text-4xl font-bold mx-6 flex items-center">
-            <GraduationCap className="h-8 w-8 mr-3 text-primary" />
-            Education & Projects
+          <h2 className="text-3xl md:text-4xl font-bold mx-6 flex flex-wrap items-center">
+            <GraduationCap className="h-8 w-8 mr-3 text-primary flex-shrink-0" />
+            <span className="whitespace-nowrap">Education & Projects</span>
           </h2>
           <div className="h-px flex-grow bg-gradient-to-l from-transparent to-primary/50"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="relative h-full">
+          <div className="relative h-full min-h-[200px]">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
-            <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-8 rounded-xl h-full">
-              <h3 className="text-2xl font-bold mb-8 flex items-center">
-                <GraduationCap className="h-6 w-6 mr-3 text-primary" />
-                Education & Certifications
+            <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-4 sm:p-8 rounded-xl h-full">
+              <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 flex items-center">
+                <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
+                <span className="break-words">Education & Certifications</span>
               </h3>
 
-              <div className="relative border-l-2 border-primary/30 pl-6 ml-3 mb-12">
+              <div className="relative border-l-2 border-primary/30 pl-4 sm:pl-6 ml-2 sm:ml-3 mb-8 sm:mb-12">
                 {education.map((edu, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
                     animate={educationInView ? { opacity: 1, x: 0 } : {}}
                     transition={{ duration: 0.5, delay: 0.2 * index }}
-                    className="mb-8 relative last:mb-0"
+                    className="mb-6 sm:mb-8 relative last:mb-0"
                   >
-                    <div className="absolute -left-[29px] top-0 w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center">
-                      <div className="w-2.5 h-2.5 rounded-full bg-background"></div>
+                    <div className="absolute -left-[25px] sm:-left-[29px] top-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center">
+                      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-background"></div>
                     </div>
 
-                    <div className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-4 hover:shadow-lg transition-all duration-300">
-                      <h4 className="text-xl font-bold">{edu.institution}</h4>
-                      <div className="text-sm text-foreground/70 mb-2 flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
+                    <div className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-3 sm:p-4 hover:shadow-lg transition-all duration-300">
+                      <h4 className="text-lg sm:text-xl font-bold">{edu.institution}</h4>
+                      <div className="text-xs sm:text-sm text-foreground/70 mb-1 sm:mb-2 flex items-center">
+                        <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
                         {edu.period}
                       </div>
-                      {edu.details && <p className="text-foreground/80">{edu.details}</p>}
+                      {edu.details && <p className="text-sm sm:text-base text-foreground/80">{edu.details}</p>}
                     </div>
                   </motion.div>
                 ))}
               </div>
 
-              <h3 className="text-2xl font-bold mb-6 flex items-center">
-                <Award className="h-6 w-6 mr-3 text-primary" />
-                Certifications
+              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center">
+                <Award className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
+                <span className="break-words">Certifications</span>
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {certifications.map((cert, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={educationInView ? { opacity: 1, y: 0 } : {}}
                     transition={{ duration: 0.5, delay: 0.4 + 0.1 * index }}
-                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-4 hover:shadow-lg transition-all duration-300"
+                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-3 sm:p-4 hover:shadow-lg transition-all duration-300"
                   >
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-semibold">{cert.name}</h4>
+                    <div className="flex flex-wrap justify-between items-start gap-2">
+                      <h4 className="font-semibold text-sm sm:text-base">{cert.name}</h4>
                       <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{cert.date}</span>
                     </div>
-                    <p className="text-sm text-foreground/70 mt-1">{cert.issuer}</p>
-                    <p className="text-sm mt-2">{cert.description}</p>
+                    <p className="text-xs sm:text-sm text-foreground/70 mt-1">{cert.issuer}</p>
+                    <p className="text-xs sm:text-sm mt-2">{cert.description}</p>
                   </motion.div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="relative h-full">
+          <div className="relative h-full min-h-[200px]">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
-            <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-8 rounded-xl h-full">
-              <h3 className="text-2xl font-bold mb-8 flex items-center">
-                <Code className="h-6 w-6 mr-3 text-primary" />
-                Projects & Achievements
+            <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-4 sm:p-8 rounded-xl h-full">
+              <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 flex items-center">
+                <Code className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
+                <span className="break-words">Projects & Achievements</span>
               </h3>
 
-              <div className="space-y-6 mb-12">
+              <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-12">
                 {projects.map((project, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={educationInView ? { opacity: 1, y: 0 } : {}}
                     transition={{ duration: 0.5, delay: 0.2 * index }}
-                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-6 hover:shadow-xl transition-all duration-300 group"
+                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-4 sm:p-6 hover:shadow-xl transition-all duration-300 group"
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <h4 className="text-xl font-bold group-hover:text-primary transition-colors">{project.name}</h4>
+                    <div className="flex flex-wrap justify-between items-start gap-2 mb-2 sm:mb-3">
+                      <h4 className="text-lg sm:text-xl font-bold group-hover:text-primary transition-colors">{project.name}</h4>
                       <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                         {project.date}
                       </span>
                     </div>
-                    <p className="text-foreground/80 mb-4">{project.description}</p>
-                    <div className="flex flex-wrap gap-2">
+                    <p className="text-sm sm:text-base text-foreground/80 mb-3 sm:mb-4">{project.description}</p>
+                    <div className="flex flex-wrap gap-1 sm:gap-2">
                       {project.technologies.map((tech, idx) => (
-                        <span key={idx} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
+                        <span key={idx} className="bg-primary/10 text-primary px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm">
                           {tech}
                         </span>
                       ))}
@@ -1183,33 +1104,33 @@ export default function ResumeContent() {
                 ))}
               </div>
 
-              <h3 className="text-2xl font-bold mb-6 flex items-center">
-                <Lightbulb className="h-6 w-6 mr-3 text-primary" />
-                Self Development
+              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center">
+                <Lightbulb className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
+                <span className="break-words">Self Development</span>
               </h3>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={educationInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.6 }}
-                className="space-y-6"
+                className="space-y-4 sm:space-y-6"
               >
-                <div className="p-5 bg-primary/5 rounded-lg border border-primary/10 hover:shadow-lg transition-all duration-300 hover:bg-primary/10">
-                  <h4 className="font-medium mb-2 flex items-center">
-                    <Terminal className="h-4 w-4 mr-2 text-primary" />
+                <div className="p-3 sm:p-5 bg-primary/5 rounded-lg border border-primary/10 hover:shadow-lg transition-all duration-300 hover:bg-primary/10">
+                  <h4 className="font-medium mb-1 sm:mb-2 flex items-center">
+                    <Terminal className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary flex-shrink-0" />
                     Linux Mastery
                   </h4>
-                  <p className="text-foreground/80">
+                  <p className="text-sm sm:text-base text-foreground/80">
                     Secara konsisten memperdalam pengetahuan tentang administrasi Linux dan konfigurasi server melalui praktik langsung dan proyek personal
                   </p>
                 </div>
 
-                <div className="p-5 bg-primary/5 rounded-lg border border-primary/10 hover:shadow-lg transition-all duration-300 hover:bg-primary/10">
-                  <h4 className="font-medium mb-2 flex items-center">
-                    <Shield className="h-4 w-4 mr-2 text-primary" />
+                <div className="p-3 sm:p-5 bg-primary/5 rounded-lg border border-primary/10 hover:shadow-lg transition-all duration-300 hover:bg-primary/10">
+                  <h4 className="font-medium mb-1 sm:mb-2 flex items-center">
+                    <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary flex-shrink-0" />
                     Keamanan Siber
                   </h4>
-                  <p className="text-foreground/80">
+                  <p className="text-sm sm:text-base text-foreground/80">
                     Terus mempelajari teknik dan praktik terbaru dalam keamanan sistem dan jaringan melalui platform pelatihan online dan komunitas Linux
                   </p>
                 </div>
@@ -1219,9 +1140,9 @@ export default function ResumeContent() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={educationInView ? { opacity: 1, scale: 1 } : {}}
                 transition={{ duration: 0.5, delay: 0.8 }}
-                className="mt-8 p-6 bg-gradient-to-br from-primary/20 to-primary-foreground/20 rounded-lg text-center"
+                className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-br from-primary/20 to-primary-foreground/20 rounded-lg text-center"
               >
-                <p className="italic text-lg">
+                <p className="italic text-sm sm:text-lg">
                   "Berkomitmen untuk selalu mengembangkan solusi berbasis Linux yang aman, efisien, dan andal untuk menyelesaikan tantangan teknologi."
                 </p>
               </motion.div>

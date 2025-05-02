@@ -1,11 +1,4 @@
 /**
- * CATATAN: FILE INI HANYA UNTUK DEPLOYMENT GITHUB PAGES!
- * =====================================================
- * Script ini hanya diperlukan jika Anda mendeploy ke GitHub Pages.
- * Jika Anda mendeploy ke platform lain (Netlify, Vercel, dll), file ini tidak diperlukan.
- * 
- * ==== GITHUB_PAGES_ONLY ====
- * 
  * Script untuk mempersiapkan deployment ke GitHub Pages
  * - Menambahkan file .nojekyll untuk memungkinkan file dengan underscore (_next)
  * - Menyalin file index.html ke 404.html untuk routing Client-side 

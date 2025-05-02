@@ -20,6 +20,7 @@ import {
   useProgress,
   Html,
   Preload,
+  useTexture,
 } from "@react-three/drei"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "./language-provider"
@@ -319,6 +320,33 @@ function FallbackContent() {
   )
 }
 
+// Komponen fallback environment jika preset gagal dimuat
+function FallbackEnvironment() {
+  // Gunakan file gambar yang sudah ada sebagai texture
+  const envTexture = useTexture("/Photo_Profile_3.jpg")
+  
+  // Buat texture menjadi environment map
+  const envMap = useMemo(() => {
+    const renderer = new THREE.WebGLRenderer()
+    const pmremGenerator = new THREE.PMREMGenerator(renderer)
+    pmremGenerator.compileEquirectangularShader()
+    
+    // Buat environment map dari texture
+    const envMap = pmremGenerator.fromEquirectangular(envTexture).texture
+    
+    // Bersihkan resources
+    envTexture.dispose()
+    pmremGenerator.dispose()
+    renderer.dispose()
+    
+    return envMap
+  }, [envTexture])
+  
+  return (
+    <primitive object={envMap} attach="environment" />
+  )
+}
+
 // Komponen utama HeroSection
 export default function HeroSection() {
   const { t } = useLanguage()
@@ -466,7 +494,14 @@ export default function HeroSection() {
         makeDefault
       />
 
-      <Environment preset="city" />
+      {/* Gunakan Suspense untuk handling error pada Environment */}
+      <Suspense fallback={<FallbackEnvironment />}>
+        <Environment 
+          preset="warehouse" 
+          background={false}
+        />
+      </Suspense>
+      
       <ContextLossDetector />
 
       {/* Tambahkan hardware-specific optimizations */}

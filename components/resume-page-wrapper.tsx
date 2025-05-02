@@ -7,11 +7,23 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
 
-// Gunakan dynamic import dengan opsi ssr: false untuk menghindari error
+// Gunakan dynamic import dengan opsi ssr: false untuk menghindari ChunkLoadError
 const ResumeContent = dynamic(
-  () => import("@/components/resume-content"),
+  () => import("@/components/resume-content").catch(err => {
+    console.error("Error loading ResumeContent:", err);
+    return () => (
+      <div className="container mx-auto py-10">
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Gagal memuat konten resume. Silakan refresh halaman.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }),
   { 
-    loading: () => <LoadingScreen />,
+    loading: () => <LoadingScreen message="Mempersiapkan resume..." />,
     ssr: false
   }
 )
@@ -26,11 +38,12 @@ export default function ResumePageWrapper() {
     setKey(prev => prev + 1)
   }
 
-  // Error boundary untuk menangkap error
+  // Reset error saat unmount
   useEffect(() => {
     return () => setError(null)
   }, [])
 
+  // Error handler
   if (error) {
     return (
       <div className="container mx-auto py-10">
@@ -48,8 +61,8 @@ export default function ResumePageWrapper() {
   }
 
   return (
-    <Suspense fallback={<LoadingScreen />}>
-      <div key={key}>
+    <Suspense fallback={<LoadingScreen message="Mempersiapkan resume..." />}>
+      <div key={key} className="resume-content-wrapper">
         <ResumeContent />
       </div>
     </Suspense>

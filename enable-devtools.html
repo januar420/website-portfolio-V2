@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pemulihan Akses DevTools</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .method {
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+        h2 {
+            color: #3498db;
+            margin-top: 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            margin: 10px 0;
+            display: block;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        pre {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+        }
+        .bookmarklet {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #f39c12;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 10px 0;
+            cursor: move;
+        }
+        .bookmarklet:hover {
+            background-color: #e67e22;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .success {
+            display: none;
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+        .copy-btn {
+            background-color: #6c757d;
+            padding: 6px 12px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pemulihan Akses DevTools</h1>
+        
+        <p>Gunakan halaman ini untuk mengaktifkan kembali DevTools yang telah dinonaktifkan pada website yang Anda kunjungi. Pilih salah satu metode di bawah ini:</p>
+        
+        <div class="method">
+            <h2>Metode 1: Bookmark Instant</h2>
+            <p>Seret bookmark ini ke bilah bookmark browser Anda, kemudian klik saat Anda berada di website target:</p>
+            <a class="bookmarklet" href="javascript:(function(){const s=document.createElement('script');s.textContent=`(${(function(){console.log('🔍 Memulai pemulihan DevTools...');const e={log:console.log.bind(console),error:console.error.bind(console),warn:console.warn.bind(console),info:console.info.bind(console),debug:console.debug.bind(console),clear:console.clear.bind(console)};Object.keys(e).forEach(o=>{console[o]=e[o]});const o=window.EventTarget.prototype.addEventListener;window.EventTarget.prototype.addEventListener=function(e,t,n){if(e==='keydown'||e==='keyup'||e==='keypress'){const i=t;const r=function(e){if(e.key==='F12'||(e.key==='I'||e.key==='i'||e.key==='J'||e.key==='j'||e.key==='C'||e.key==='c')&&(e.ctrlKey||e.metaKey)&&e.shiftKey){console.log('🔑 DevTools shortcut diizinkan');return}return i.apply(this,arguments)};return o.call(this,e,r,n)}return o.call(this,e,t,n)};Object.defineProperty(window,'devtools',{get:function(){return undefined},set:function(){},configurable:true});for(let e=1;e<10000;e++){window.clearInterval(e)}console.log('✅ Mekanisme pembatasan DevTools telah dihapus!')})})`; document.head.appendChild(s);})();" draggable="true">Aktifkan DevTools</a>
+            <p><strong>Cara Penggunaan:</strong> Seret link di atas ke bilah bookmark browser Anda, kemudian klik bookmark tersebut saat berada di website yang memblokir DevTools.</p>
+        </div>
+        
+        <div class="method">
+            <h2>Metode 2: Kode Konsol</h2>
+            <p>Salin kode berikut dan tempelkan ke konsol browser (jika masih bisa dibuka):</p>
+            <pre id="consoleCode">(function() {
+  console.log('🔍 Memulai pemulihan DevTools...');
+  
+  // Kembalikan console API
+  const originalConsole = {
+    log: console.log.bind(console),
+    error: console.error.bind(console),
+    warn: console.warn.bind(console),
+    info: console.info.bind(console),
+    debug: console.debug.bind(console),
+    clear: console.clear.bind(console)
+  };
+  
+  Object.keys(originalConsole).forEach(key => {
+    console[key] = originalConsole[key];
+  });
+  
+  // Ganti addEventListener
+  const originalAddEventListener = window.EventTarget.prototype.addEventListener;
+  window.EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (type === 'keydown' || type === 'keyup' || type === 'keypress') {
+      const originalListener = listener;
+      const newListener = function(event) {
+        if ((event.key === 'F12') || 
+            ((event.key === 'I' || event.key === 'i' || event.key === 'J' || event.key === 'j' || event.key === 'C' || event.key === 'c') && 
+             (event.ctrlKey || event.metaKey) && event.shiftKey)) {
+          console.log('🔑 DevTools shortcut diizinkan');
+          return;
+        }
+        return originalListener.apply(this, arguments);
+      };
+      return originalAddEventListener.call(this, type, newListener, options);
+    }
+    return originalAddEventListener.call(this, type, listener, options);
+  };
+  
+  // Nonaktifkan deteksi DevTools
+  Object.defineProperty(window, 'devtools', {
+    get: function() { return undefined; },
+    set: function() { },
+    configurable: true
+  });
+  
+  // Bersihkan interval
+  for (let i = 1; i < 10000; i++) {
+    window.clearInterval(i);
+  }
+  
+  console.log('✅ Mekanisme pembatasan DevTools telah dihapus!');
+})();</pre>
+            <button class="copy-btn" onclick="copyConsoleCode()">Salin Kode</button>
+        </div>
+        
+        <div class="method">
+            <h2>Metode 3: Jalankan Langsung</h2>
+            <p>Klik tombol di bawah untuk menjalankan script pemulihan DevTools di halaman ini:</p>
+            <button id="activateBtn" onclick="activateDevTools()">Aktifkan DevTools</button>
+            <div id="successMessage" class="success">Script berhasil dijalankan! Coba buka DevTools dengan F12 atau Ctrl+Shift+I (Windows) / Cmd+Option+I (Mac)</div>
+        </div>
+        
+        <div class="warning">
+            <h3>Jika Masih Gagal:</h3>
+            <ol>
+                <li>Coba buka situs target di mode Penyamaran/Incognito</li>
+                <li>Gunakan browser lain (Firefox sering lebih permisif untuk DevTools)</li>
+                <li>Pada Chrome, coba tambahkan parameter <code>--disable-features=BlockInsecurePrivateNetworkRequests</code> saat meluncurkan browser</li>
+                <li>Coba akses melalui shortcut keyboard langsung: F12 atau Ctrl+Shift+I (Windows/Linux) / Cmd+Option+I (Mac)</li>
+            </ol>
+        </div>
+        
+        <h3>Bagaimana Cara Kerjanya?</h3>
+        <p>Script ini bekerja dengan cara:</p>
+        <ol>
+            <li>Mengembalikan fungsi asli console API yang mungkin telah diganti</li>
+            <li>Mengganti fungsi addEventListener untuk mencegah pemblokiran shortcut keyboard DevTools</li>
+            <li>Menghapus properti yang digunakan untuk mendeteksi DevTools</li>
+            <li>Membersihkan interval yang mungkin digunakan untuk memeriksa DevTools</li>
+            <li>Mencegah pendeteksian melalui perbedaan ukuran jendela</li>
+        </ol>
+    </div>
+    
+    <footer>
+        <p>Tool ini dibuat untuk tujuan pembelajaran dan debugging saja.</p>
+    </footer>
+
+    <script>
+        function copyConsoleCode() {
+            const codeElement = document.getElementById('consoleCode');
+            const textArea = document.createElement('textarea');
+            textArea.value = codeElement.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            const copyBtn = document.querySelector('.copy-btn');
+            copyBtn.textContent = 'Disalin!';
+            setTimeout(() => {
+                copyBtn.textContent = 'Salin Kode';
+            }, 2000);
+        }
+        
+        function activateDevTools() {
+            // Jalankan script
+            (function() {
+                console.log('🔍 Memulai pemulihan DevTools...');
+                
+                // Kembalikan console API
+                const originalConsole = {
+                    log: console.log.bind(console),
+                    error: console.error.bind(console),
+                    warn: console.warn.bind(console),
+                    info: console.info.bind(console),
+                    debug: console.debug.bind(console),
+                    clear: console.clear.bind(console)
+                };
+                
+                Object.keys(originalConsole).forEach(key => {
+                    console[key] = originalConsole[key];
+                });
+                
+                // Ganti addEventListener
+                const originalAddEventListener = window.EventTarget.prototype.addEventListener;
+                window.EventTarget.prototype.addEventListener = function(type, listener, options) {
+                    if (type === 'keydown' || type === 'keyup' || type === 'keypress') {
+                        const originalListener = listener;
+                        const newListener = function(event) {
+                            if ((event.key === 'F12') || 
+                                ((event.key === 'I' || event.key === 'i' || event.key === 'J' || event.key === 'j' || event.key === 'C' || event.key === 'c') && 
+                                 (event.ctrlKey || event.metaKey) && event.shiftKey)) {
+                                console.log('🔑 DevTools shortcut diizinkan');
+                                return;
+                            }
+                            return originalListener.apply(this, arguments);
+                        };
+                        return originalAddEventListener.call(this, type, newListener, options);
+                    }
+                    return originalAddEventListener.call(this, type, listener, options);
+                };
+                
+                // Nonaktifkan deteksi DevTools
+                Object.defineProperty(window, 'devtools', {
+                    get: function() { return undefined; },
+                    set: function() { },
+                    configurable: true
+                });
+                
+                // Bersihkan interval
+                for (let i = 1; i < 10000; i++) {
+                    window.clearInterval(i);
+                }
+                
+                console.log('✅ Mekanisme pembatasan DevTools telah dihapus!');
+                
+                // Trigger debugger
+                setTimeout(() => {
+                    try {
+                        debugger;
+                    } catch(e) {
+                        console.log('Debugger statement diblokir:', e);
+                    }
+                }, 500);
+            })();
+            
+            // Tampilkan pesan berhasil
+            const successMsg = document.getElementById('successMessage');
+            successMsg.style.display = 'block';
+            
+            // Ubah teks tombol
+            const activateBtn = document.getElementById('activateBtn');
+            activateBtn.textContent = 'Script Dijalankan!';
+            activateBtn.disabled = true;
+        }
+    </script>
+</body>
+</html> 

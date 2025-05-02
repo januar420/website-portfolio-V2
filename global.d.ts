@@ -17,6 +17,8 @@ declare global {
     __R3F_PATCHED?: boolean;
     __THREE__?: Record<string, unknown>;
     React?: any;
+    emailjs: any;
+    reactCurrentOwner: any;
   }
 
   // Memperluas Performance untuk ReactThreeFiber
@@ -65,6 +67,29 @@ declare module 'json-schema' {
     additionalProperties?: boolean | JSONSchema7;
     items?: JSONSchema7 | JSONSchema7[];
   }
+}
+
+// Memperluas tipe RenderingContext untuk WebGL
+interface WebGLRenderingContext {
+  getExtension(name: string): any;
+}
+
+// Memperluas tipe CanvasRenderingContext2D 
+interface CanvasRenderingContext2D {
+  getExtension?(name: string): any;
+}
+
+// Memperluas tipe window dengan React current owner
+interface WindowWithReactCurrentOwner extends Window {
+  __REACT_DEVTOOLS_GLOBAL_HOOK__?: any;
+}
+
+// Definisi tipe untuk EmailData
+interface EmailData {
+  name: string;
+  email: string;
+  message: string;
+  subject: string;
 }
 
 export {}; 
