@@ -1,3 +1,6 @@
+## WORKFLOW INI DINONAKTIFKAN
+# Untuk mengaktifkan kembali, ubah nama file dari cloudflare-pages.yml.disabled menjadi cloudflare-pages.yml
+
 name: Deploy to Cloudflare Pages
 
 on:
