@@ -32,35 +32,45 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DownloadCVButton from "./download-cv-button"
+import { useLanguage } from "./language-provider"
 
 // Function untuk menghasilkan gambar abstrak yang berbeda-beda - disederhanakan
 function generateAbstractBackgroundImage(width = 1200, height = 600, seed = Math.random() * 1000) {
-  // Gunakan placeholder jika di server-side
+  // Gunakan placeholder jika di server-side atau perangkat mobile
   if (typeof window === 'undefined') return '';
   
+  // Menggunakan gradient statis saja untuk menghindari permasalahan render
   try {
-    // Menggunakan pendekatan CSS gradients daripada canvas untuk menghindari masalah
-    const colors = [
-      'rgba(59, 130, 246, 0.7)',  // Biru
-      'rgba(139, 92, 246, 0.7)',   // Ungu
-      'rgba(236, 72, 153, 0.7)',   // Merah muda
-      'rgba(14, 165, 233, 0.7)',   // Cyan
-      'rgba(16, 185, 129, 0.7)',   // Hijau
+    // Menggunakan pendekatan CSS gradients yang lebih sederhana
+    const safeColors = [
+      'rgba(59, 130, 246, 0.3)',  // Biru
+      'rgba(139, 92, 246, 0.3)',   // Ungu
+      'rgba(236, 72, 153, 0.3)',   // Merah muda
+      'rgba(14, 165, 233, 0.3)',   // Cyan
+      'rgba(16, 185, 129, 0.3)',   // Hijau
     ];
     
-    // Pilih dua warna acak untuk gradient
-    const color1 = colors[Math.floor(Math.random() * colors.length)];
-    const color2 = colors[Math.floor(Math.random() * colors.length)];
+    // Pada mobile, gunakan gradient yang sangat sederhana
+    if (window.innerWidth < 768) {
+      return 'linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3))';
+    }
     
-    // Buat gradient CSS daripada menggunakan canvas
-    return `linear-gradient(135deg, ${color1}, ${color2})`;
+    // Simplified gradient approach
+    const angle = Math.floor(Math.random() * 360);
+    const color1 = safeColors[Math.floor(Math.random() * safeColors.length)];
+    const color2 = safeColors[Math.floor(Math.random() * safeColors.length)];
+    
+    // Simple linear gradient 
+    return `linear-gradient(${angle}deg, ${color1}, ${color2})`;
   } catch (error) {
     console.error("Error generating background:", error);
-    return '';
+    // Fallback ke gradient yang sangat sederhana
+    return 'linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3))';
   }
 }
 
 export default function ResumeContent() {
+  const { t } = useLanguage()
   const bioRef = useRef(null)
   const skillsRef = useRef(null)
   const experienceRef = useRef(null)
@@ -76,6 +86,7 @@ export default function ResumeContent() {
   const [randomHeaderImage, setRandomHeaderImage] = useState<string>("")
   const [generatedBackground, setGeneratedBackground] = useState<string>("")
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [isMobile, setIsMobile] = useState(false)
 
   // Function untuk memilih gambar header secara acak
   useEffect(() => {
@@ -85,6 +96,22 @@ export default function ResumeContent() {
     ]
     const randomIndex = Math.floor(Math.random() * headerImages.length)
     setRandomHeaderImage(headerImages[randomIndex])
+    
+    // Deteksi perangkat mobile
+    const checkIfMobile = () => {
+      const userAgent = 
+        typeof window.navigator === "undefined" ? "" : navigator.userAgent;
+      const mobile = Boolean(
+        userAgent.match(
+          /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i
+        )
+      );
+      setIsMobile(mobile);
+    };
+    
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    return () => window.removeEventListener("resize", checkIfMobile);
   }, [])
 
   // Generate abstract background image saat komponen dimount
@@ -92,18 +119,24 @@ export default function ResumeContent() {
     // Cek jika sudah ada background yang di-generate, jangan generate ulang
     if (!generatedBackground) {
       try {
-        const backgroundImage = generateAbstractBackgroundImage();
+        // Pada perangkat mobile, gunakan background yang lebih sederhana
+        const backgroundImage = isMobile 
+          ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3))'
+          : generateAbstractBackgroundImage();
         setGeneratedBackground(backgroundImage);
       } catch (error) {
         console.error("Error generating background:", error);
         // Gunakan fallback background jika gagal generate
-        setGeneratedBackground(""); 
+        setGeneratedBackground("linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3))"); 
       }
     }
-  }, [generatedBackground]);
+  }, [generatedBackground, isMobile]);
 
-  // Mouse movement effect
+  // Mouse movement effect - disable on mobile
   useEffect(() => {
+    // Skip this effect on mobile devices
+    if (isMobile) return;
+    
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({
         x: e.clientX / window.innerWidth,
@@ -115,22 +148,172 @@ export default function ResumeContent() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, []);
+  }, [isMobile]);
 
-  const toggleJobDetails = (index: number) => {
-    setExpandedJob(expandedJob === index ? null : index)
-  }
-
-  // Tambahkan useEffect untuk efek parallax
+  // Tambahkan useEffect untuk efek parallax - lighten on mobile
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY)
-      document.documentElement.style.setProperty('--scroll-offset', `${window.scrollY * 0.1}px`)
+      // Pada perangkat mobile, gunakan efek parallax yang lebih ringan
+      const parallaxMultiplier = isMobile ? 0.05 : 0.1;
+      document.documentElement.style.setProperty('--scroll-offset', `${window.scrollY * parallaxMultiplier}px`)
     }
     
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [isMobile])
+
+  // Tambahkan useEffect untuk memastikan section visible di mobile
+  useEffect(() => {
+    // Khusus untuk perangkat mobile, kita akan memaksa semua section terlihat
+    if (isMobile) {
+      // Force semua useInView state menjadi true pada perangkat mobile
+      // untuk memastikan semua konten terlihat bahkan jika IntersectionObserver tidak berfungsi
+      if (!bioInView) document.documentElement.style.setProperty('--bio-in-view', '1');
+      if (!skillsInView) document.documentElement.style.setProperty('--skills-in-view', '1');
+      if (!experienceInView) document.documentElement.style.setProperty('--experience-in-view', '1');
+      if (!educationInView) document.documentElement.style.setProperty('--education-in-view', '1');
+    }
+  }, [isMobile, bioInView, skillsInView, experienceInView, educationInView]);
+  
+  // Hitung viewport height sekali pada saat mount untuk memastikan seluruh konten dapat diakses
+  useEffect(() => {
+    if (isMobile) {
+      // Fix untuk Safari mobile yang memiliki masalah dengan viewport height
+      const setViewportHeight = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      };
+      
+      setViewportHeight();
+      window.addEventListener('resize', setViewportHeight);
+      
+      // Pastikan Education & Projects section di-render dalam viewport
+      setTimeout(() => {
+        const educationSection = educationRef.current;
+        if (educationSection && typeof educationSection.scrollIntoView === 'function') {
+          // Pastikan section terlihat di viewport pada mobile browser
+          window.scrollBy(0, 1); // Trigger rendering di beberapa browser mobile
+        }
+      }, 500);
+      
+      return () => window.removeEventListener('resize', setViewportHeight);
+    }
+  }, [isMobile]);
+
+  // Tambahkan useEffect untuk fallback jika IntersectionObserver tidak bekerja
+  useEffect(() => {
+    // Ini adalah fallback jika IntersectionObserver tidak berfungsi dengan baik
+    // Biasanya terjadi pada beberapa browser mobile
+    let timeout: NodeJS.Timeout;
+    
+    if (isMobile) {
+      // Setelah waktu tertentu, jika section masih belum terlihat, paksa tampilkan
+      timeout = setTimeout(() => {
+        const educationElement = educationRef.current;
+        if (educationElement && !educationInView) {
+          // Secara manual force tampilkan education section
+          console.log("Applying fallback for Education section visibility on mobile");
+          document.documentElement.style.setProperty('--education-in-view', '1');
+          
+          // Tambahkan class mobile-visible pada semua elemen child
+          const allAnimatedElements = educationElement.querySelectorAll('.motion-div');
+          allAnimatedElements.forEach(el => {
+            if (el instanceof HTMLElement) {
+              el.classList.add('mobile-visible');
+            }
+          });
+        }
+      }, 2000); // Tunggu 2 detik sebelum fallback diterapkan
+    }
+    
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [isMobile, educationInView]);
+
+  // Tambahkan useEffect untuk pre-render section Education & Projects
+  useEffect(() => {
+    if (isMobile) {
+      // Pre-render education section dengan cepat pada perangkat mobile
+      // dengan menonaktifkan animasi dan transisi
+      document.documentElement.classList.add('reduce-animations-mobile');
+      
+      // Force render education section segera
+      setTimeout(() => {
+        const educationElement = educationRef.current;
+        if (educationElement) {
+          console.log("Pre-rendering education section for mobile");
+          document.documentElement.style.setProperty('--education-in-view', '1');
+          
+          // Force menampilkan semua elemen child dengan class motion-div
+          const allAnimatedElements = document.querySelectorAll('.motion-div');
+          allAnimatedElements.forEach(el => {
+            if (el instanceof HTMLElement) {
+              el.classList.add('mobile-visible');
+              el.style.opacity = '1';
+              el.style.transform = 'none';
+            }
+          });
+        }
+      }, 100); // Waktu sangat pendek untuk memastikan render segera
+    }
+    
+    return () => {
+      document.documentElement.classList.remove('reduce-animations-mobile');
+    };
+  }, [isMobile]);
+
+  // Tambahkan init function untuk mempersiapkan render
+  useEffect(() => {
+    // Fungsi untuk memastikan rendering yang optimal
+    const optimizeForDevice = () => {
+      // Pada mobile, gunakan DOM manipulation langsung untuk memastikan render
+      if (isMobile) {
+        // Nonaktifkan animasi yang kompleks
+        document.querySelectorAll('.can-disable-on-mobile').forEach(el => {
+          if (el instanceof HTMLElement) {
+            el.style.display = 'none';
+          }
+        });
+        
+        // Pre-load gambar utama
+        const imgPreload = document.createElement('img');
+        imgPreload.src = "/Photo_Profile_3.jpg";
+        imgPreload.style.display = 'none';
+        document.body.appendChild(imgPreload);
+        setTimeout(() => {
+          if (imgPreload && imgPreload.parentNode) {
+            imgPreload.parentNode.removeChild(imgPreload);
+          }
+        }, 1000);
+        
+        // Force pengurangan motion
+        const htmlEl = document.documentElement;
+        htmlEl.style.setProperty('--reduce-motion', '1');
+      }
+    };
+    
+    optimizeForDevice();
+    
+    // Fallback rendering yang lebih cepat
+    const fallbackTimer = setTimeout(() => {
+      if (isMobile) {
+        console.log("Applying quick fallback render");
+        // Force render semua section
+        document.documentElement.style.setProperty('--bio-in-view', '1');
+        document.documentElement.style.setProperty('--skills-in-view', '1');
+        document.documentElement.style.setProperty('--experience-in-view', '1');
+        document.documentElement.style.setProperty('--education-in-view', '1');
+      }
+    }, 800);
+    
+    return () => clearTimeout(fallbackTimer);
+  }, [isMobile]);
+
+  const toggleJobDetails = (index: number) => {
+    setExpandedJob(expandedJob === index ? null : index)
+  }
 
   const technicalSkills = [
     {
@@ -324,92 +507,101 @@ export default function ResumeContent() {
 
   return (
     <div className="container mx-auto px-4">
-      {/* Header with Enhanced Parallax Effect */}
-      <div className="relative h-[350px] mb-20 overflow-hidden rounded-3xl group perspective">
-        {/* Background Gradient Layers */}
-        <div 
-          className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary-foreground/30 to-primary/40 z-[0] animate-gradient-slow"
-          style={{
-            backgroundSize: "200% 200%",
-          }}
-        ></div>
+      {/* Header with Enhanced Parallax Effect - Sangat disederhanakan pada mobile */}
+      <div className={`relative h-[350px] mb-20 sm:mb-12 overflow-hidden rounded-3xl group perspective ${isMobile ? 'simplified-bg reduce-motion h-[250px]' : ''}`}>
+        {/* Background simplification for mobile */}
+        {isMobile ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary-foreground/30 to-primary/40 z-[0]"></div>
+        ) : (
+          <div 
+            className={`absolute inset-0 bg-gradient-to-br from-primary/20 via-primary-foreground/30 to-primary/40 z-[0] animate-gradient-slow ${isMobile ? 'disable-animation' : ''}`}
+            style={{
+              backgroundSize: "200% 200%",
+            }}
+          ></div>
+        )}
         
-        {/* Dynamic Pattern Overlay */}
-        <div 
-          className="absolute inset-0 opacity-20 z-[1]"
-          style={{
-            backgroundImage: "radial-gradient(circle at center, white 0.5px, transparent 0.5px), radial-gradient(circle at center, white 0.5px, transparent 0.5px)",
-            backgroundSize: "20px 20px, 30px 30px",
-            backgroundPosition: "0 0, 10px 10px",
-            transform: "translateY(var(--scroll-offset, 0px)) scale(1.05)",
-          }}
-        ></div>
+        {/* Skip complex patterns on mobile */}
+        {!isMobile && (
+          <div 
+            className="absolute inset-0 opacity-20 z-[1]"
+            style={{
+              backgroundImage: "radial-gradient(circle at center, white 0.5px, transparent 0.5px), radial-gradient(circle at center, white 0.5px, transparent 0.5px)",
+              backgroundSize: "20px 20px, 30px 30px",
+              backgroundPosition: "0 0, 10px 10px",
+              transform: "translateY(var(--scroll-offset, 0px)) scale(1.05)",
+            }}
+          ></div>
+        )}
         
-        {/* Glowing Orbs Animation */}
-        <div className="absolute inset-0 overflow-hidden z-[2]">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <motion.div 
-              key={i}
-              className="absolute rounded-full bg-white/10 blur-xl"
-              style={{
-                width: `${Math.random() * 100 + 50}px`,
-                height: `${Math.random() * 100 + 50}px`,
-                top: `${Math.random() * 80}%`,
-                left: `${Math.random() * 80}%`,
-              }}
-              animate={{
-                y: [0, -20, 0],
-                opacity: [0.2, 0.4, 0.2],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: Math.random() * 5 + 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
+        {/* Entirely skip complex animations on mobile */}
+        {!isMobile && (
+          <div className="absolute inset-0 overflow-hidden z-[2] can-disable-on-mobile">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <motion.div 
+                key={i}
+                className="absolute rounded-full bg-white/10 blur-xl"
+                style={{
+                  width: `${Math.random() * 100 + 50}px`,
+                  height: `${Math.random() * 100 + 50}px`,
+                  top: `${Math.random() * 80}%`,
+                  left: `${Math.random() * 80}%`,
+                }}
+                animate={{
+                  y: [0, -20, 0],
+                  opacity: [0.2, 0.4, 0.2],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: Math.random() * 5 + 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </div>
+        )}
         
-        {/* Generated Dynamic Background Image */}
+        {/* Simplified background image for mobile */}
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-40 z-[3]"
+          className={`absolute inset-0 bg-cover bg-center opacity-40 z-[3] ${isMobile ? 'simplified-bg' : ''}`}
           style={{
-            background: generatedBackground,
-            transform: "translateY(var(--scroll-offset, 0px)) scale(1.1)",
-            filter: "contrast(1.2) brightness(0.8)"
+            background: isMobile ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3))' : generatedBackground,
+            transform: isMobile ? "none" : "translateY(var(--scroll-offset, 0px)) scale(1.1)",
+            filter: isMobile ? "none" : "contrast(1.2) brightness(0.8)"
           }}
         >
-          {/* Dynamic colored overlay based on image */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-transparent to-primary-foreground/40 mix-blend-overlay"></div>
+          {!isMobile && (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-transparent to-primary-foreground/40 mix-blend-overlay"></div>
+          )}
         </div>
         
-        {/* Frosted Glass Effect */}
-        <div className="absolute inset-0 backdrop-blur-[2px] z-[5]"></div>
+        {/* Skip glass effect on mobile */}
+        {!isMobile && <div className="absolute inset-0 backdrop-blur-[2px] z-[5] can-disable-on-mobile"></div>}
         
-        {/* Animated Border */}
+        {/* Simplified border for mobile */}
         <div className="absolute inset-0 z-[6] p-[1px] rounded-3xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/50 via-white/10 to-primary-foreground/50 animate-rotate-slow rounded-3xl"></div>
+          <div className={`absolute inset-0 bg-gradient-to-br from-primary/50 via-white/10 to-primary-foreground/50 rounded-3xl ${isMobile ? '' : 'animate-rotate-slow'}`}></div>
         </div>
         
-        {/* Content */}
+        {/* Content - Simplified for mobile */}
         <div className="absolute inset-0 flex items-center justify-center z-[20]">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.2 }}
+            transition={{ duration: isMobile ? 0.3 : 1, delay: isMobile ? 0 : 0.2 }}
             className="text-center px-4"
           >
-            {/* Logo JGP */}
+            {/* Logo - Simplified for mobile */}
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
-              className="mx-auto mb-5 relative"
+              transition={{ duration: isMobile ? 0.3 : 0.8, delay: 0.1 }}
+              className={`mx-auto mb-5 relative ${isMobile ? 'scale-75' : ''}`}
             >
               <motion.div 
                 className="w-28 h-28 rounded-full bg-gradient-to-r from-primary/80 to-primary-foreground/80 flex items-center justify-center mx-auto shadow-xl shadow-primary/30 overflow-hidden border-2 border-white/50 relative z-10 group cursor-pointer"
-                whileHover={{ scale: 1.05 }}
+                whileHover={isMobile ? {} : { scale: 1.05 }}
                 transition={{ duration: 0.3 }}
               >
                 <Image
@@ -418,82 +610,94 @@ export default function ResumeContent() {
                   width={112}
                   height={112}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  priority={true}
+                  loading="eager"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-30 group-hover:opacity-10 transition-opacity duration-300"></div>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-primary-foreground/30 opacity-0 group-hover:opacity-40 transition-opacity duration-300 mix-blend-overlay"></div>
                 
-                <motion.div 
-                  className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  whileHover={{ opacity: 1 }}
-                >
-                  <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">JGP</span>
-                </motion.div>
+                {!isMobile && (
+                  <motion.div 
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    whileHover={{ opacity: 1 }}
+                  >
+                    <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">JGP</span>
+                  </motion.div>
+                )}
               </motion.div>
               
-              {/* Efek lingkaran animasi */}
-              <motion.div 
-                className="absolute inset-[-6px] rounded-full border-2 border-white/30 z-0"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-              />
-              <motion.div 
-                className="absolute inset-[-12px] rounded-full border-2 border-white/20 z-0"
-                animate={{ rotate: -360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              />
+              {/* Skip animated circles on mobile */}
+              {!isMobile && (
+                <>
+                  <motion.div 
+                    className="absolute inset-[-6px] rounded-full border-2 border-white/30 z-0 can-disable-on-mobile"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                  />
+                  <motion.div 
+                    className="absolute inset-[-12px] rounded-full border-2 border-white/20 z-0 can-disable-on-mobile"
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  />
+                </>
+              )}
             </motion.div>
             
+            {/* Simplified text animation for mobile */}
             <motion.h1 
-              className="text-5xl md:text-6xl font-bold mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/80 drop-shadow-xl"
-              initial={{ letterSpacing: "0.05em" }}
+              className={`${isMobile ? 'text-3xl' : 'text-5xl md:text-6xl'} font-bold mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/80 drop-shadow-xl`}
+              initial={{ letterSpacing: isMobile ? "0.02em" : "0.05em" }}
               animate={{ letterSpacing: "0.02em" }}
-              transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+              transition={{ duration: isMobile ? 0 : 2, repeat: isMobile ? 0 : Infinity, repeatType: "reverse" }}
             >
               Linux & Cybersecurity
             </motion.h1>
             
+            {/* Simplified divider for mobile */}
             <motion.div 
-              initial={{ width: "20px", opacity: 0.5 }}
+              initial={{ width: isMobile ? "100px" : "20px", opacity: 0.5 }}
               animate={{ width: "120px", opacity: 1 }}
-              transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+              transition={{ duration: isMobile ? 0.5 : 1.5, delay: isMobile ? 0.1 : 0.5, ease: "easeOut" }}
               className="h-1 bg-gradient-to-r from-transparent via-white/90 to-transparent mx-auto mb-4"
             />
             
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 0.9, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-              className="text-sm md:text-base text-white/90 max-w-md mx-auto font-medium tracking-wider"
+              transition={{ duration: isMobile ? 0.3 : 0.8, delay: isMobile ? 0.2 : 0.7 }}
+              className={`${isMobile ? 'text-xs' : 'text-sm md:text-base'} text-white/90 max-w-md mx-auto font-medium tracking-wider`}
             >
               IT & Cyber Security Enthusiast
             </motion.p>
           </motion.div>
         </div>
         
-        {/* Interactive Particles on Hover */}
-        <div className="absolute inset-0 z-[30] opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <motion.div 
-              key={`particle-${i}`}
-              className="absolute w-1 h-1 bg-white rounded-full"
-              style={{ 
-                top: `${Math.random() * 100}%`, 
-                left: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [0, -20],
-                opacity: [0, 0.8, 0],
-                scale: [0, 1, 0]
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-                repeatDelay: Math.random() * 2,
-              }}
-            />
-          ))}
-        </div>
+        {/* Interactive Particles - Disabled on mobile */}
+        {!isMobile && (
+          <div className="absolute inset-0 z-[30] opacity-0 group-hover:opacity-100 transition-opacity duration-700 can-disable-on-mobile">
+            {Array.from({ length: 15 }).map((_, i) => (
+              <motion.div 
+                key={`particle-${i}`}
+                className="absolute w-1 h-1 bg-white rounded-full"
+                style={{ 
+                  top: `${Math.random() * 100}%`, 
+                  left: `${Math.random() * 100}%`,
+                }}
+                animate={{
+                  y: [0, -20],
+                  opacity: [0, 0.8, 0],
+                  scale: [0, 1, 0]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 2,
+                  repeatDelay: Math.random() * 2,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Bio Section with 3D Card Effect */}
@@ -649,7 +853,7 @@ export default function ResumeContent() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={skillsInView ? { opacity: 1, x: 0 } : {}}
                       transition={{ duration: 0.5, delay: 0.1 * index }}
-                      className="group"
+                      className="group motion-div"
                     >
                       <div className="flex items-center mb-2">
                         <TooltipProvider>
@@ -696,7 +900,7 @@ export default function ResumeContent() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={skillsInView ? { opacity: 1, x: 0 } : {}}
                       transition={{ duration: 0.5, delay: 0.1 * index }}
-                      className="group"
+                      className="group motion-div"
                     >
                       <div className="flex items-center mb-2">
                         <TooltipProvider>
@@ -878,7 +1082,7 @@ export default function ResumeContent() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={experienceInView ? { opacity: 1, x: 0 } : {}}
                   transition={{ duration: 0.5, delay: 0.2 * index }}
-                  className="mb-12 relative last:mb-0"
+                  className="mb-12 relative last:mb-0 motion-div"
                 >
                   <div className="absolute -left-[41px] top-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center shadow-lg">
                     <div className="w-3 h-3 rounded-full bg-background"></div>
@@ -992,15 +1196,17 @@ export default function ResumeContent() {
         </div>
       </motion.div>
 
-      {/* Education & Projects Section */}
+      {/* Education & Projects Section - Enhanced for mobile */}
       <motion.div
         ref={educationRef}
-        initial={{ opacity: 0, y: 30 }}
-        animate={educationInView ? { opacity: 1, y: 0 } : {}}
+        initial={{ opacity: isMobile ? 1 : 0, y: isMobile ? 0 : 30 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="mb-24"
+        className="mb-24 sm:mb-16"
+        data-section="education"
+        id="education-section"
       >
-        <div className="flex items-center mb-12">
+        <div className="flex items-center mb-12 sm:mb-8">
           <div className="h-px flex-grow bg-gradient-to-r from-transparent to-primary/50"></div>
           <h2 className="text-3xl md:text-4xl font-bold mx-6 flex flex-wrap items-center">
             <GraduationCap className="h-8 w-8 mr-3 text-primary flex-shrink-0" />
@@ -1009,8 +1215,10 @@ export default function ResumeContent() {
           <div className="h-px flex-grow bg-gradient-to-l from-transparent to-primary/50"></div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="relative h-full min-h-[200px]">
+        {/* Grid yang dioptimalkan untuk mobile - ubah layout menjadi 1 kolom di mobile dengan spacing lebih pendek */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-6">
+          {/* Education & Certifications - Diberi masing-masing ID untuk memudahkan akses DOM */}
+          <div className="relative h-full min-h-[200px]" id="education-col">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
             <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-4 sm:p-8 rounded-xl h-full">
               <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 flex items-center">
@@ -1018,14 +1226,14 @@ export default function ResumeContent() {
                 <span className="break-words">Education & Certifications</span>
               </h3>
 
+              {/* Education items dengan struktur yang dioptimalkan */}
               <div className="relative border-l-2 border-primary/30 pl-4 sm:pl-6 ml-2 sm:ml-3 mb-8 sm:mb-12">
                 {education.map((edu, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={educationInView ? { opacity: 1, x: 0 } : {}}
-                    transition={{ duration: 0.5, delay: 0.2 * index }}
-                    className="mb-6 sm:mb-8 relative last:mb-0"
+                    className="mb-6 sm:mb-8 relative last:mb-0 motion-div mobile-visible opacity-100"
+                    style={{ transform: 'none' }}
+                    id={`education-item-${index}`}
                   >
                     <div className="absolute -left-[25px] sm:-left-[29px] top-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center">
                       <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-background"></div>
@@ -1039,23 +1247,23 @@ export default function ResumeContent() {
                       </div>
                       {edu.details && <p className="text-sm sm:text-base text-foreground/80">{edu.details}</p>}
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
+              {/* Certifications dengan rendereing yang dioptimalkan */}
               <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center">
                 <Award className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
                 <span className="break-words">Certifications</span>
               </h3>
 
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-3 sm:space-y-4" id="certifications-container">
                 {certifications.map((cert, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={educationInView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.5, delay: 0.4 + 0.1 * index }}
-                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-3 sm:p-4 hover:shadow-lg transition-all duration-300"
+                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-3 sm:p-4 hover:shadow-lg transition-all duration-300 motion-div mobile-visible opacity-100"
+                    style={{ transform: 'none' }}
+                    id={`certification-item-${index}`}
                   >
                     <div className="flex flex-wrap justify-between items-start gap-2">
                       <h4 className="font-semibold text-sm sm:text-base">{cert.name}</h4>
@@ -1063,13 +1271,14 @@ export default function ResumeContent() {
                     </div>
                     <p className="text-xs sm:text-sm text-foreground/70 mt-1">{cert.issuer}</p>
                     <p className="text-xs sm:text-sm mt-2">{cert.description}</p>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="relative h-full min-h-[200px]">
+          {/* Projects & Achievements - Dengan rendering yang dioptimalkan */}
+          <div className="relative h-full min-h-[200px]" id="projects-col">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
             <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-4 sm:p-8 rounded-xl h-full">
               <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 flex items-center">
@@ -1077,14 +1286,14 @@ export default function ResumeContent() {
                 <span className="break-words">Projects & Achievements</span>
               </h3>
 
-              <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-12">
+              {/* Projects dengan rendering statis untuk mobile */}
+              <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-12" id="projects-container">
                 {projects.map((project, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={educationInView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.5, delay: 0.2 * index }}
-                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-4 sm:p-6 hover:shadow-xl transition-all duration-300 group"
+                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-4 sm:p-6 hover:shadow-xl transition-all duration-300 group motion-div mobile-visible opacity-100"
+                    style={{ transform: 'none' }}
+                    id={`project-item-${index}`}
                   >
                     <div className="flex flex-wrap justify-between items-start gap-2 mb-2 sm:mb-3">
                       <h4 className="text-lg sm:text-xl font-bold group-hover:text-primary transition-colors">{project.name}</h4>
@@ -1100,21 +1309,17 @@ export default function ResumeContent() {
                         </span>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
+              {/* Self Development items - rendering statis untuk performa */}
               <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center">
                 <Lightbulb className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
                 <span className="break-words">Self Development</span>
               </h3>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={educationInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: 0.6 }}
-                className="space-y-4 sm:space-y-6"
-              >
+              <div className="space-y-4 sm:space-y-6 motion-div mobile-visible opacity-100" style={{ transform: 'none' }} id="self-dev-container">
                 <div className="p-3 sm:p-5 bg-primary/5 rounded-lg border border-primary/10 hover:shadow-lg transition-all duration-300 hover:bg-primary/10">
                   <h4 className="font-medium mb-1 sm:mb-2 flex items-center">
                     <Terminal className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary flex-shrink-0" />
@@ -1134,18 +1339,13 @@ export default function ResumeContent() {
                     Terus mempelajari teknik dan praktik terbaru dalam keamanan sistem dan jaringan melalui platform pelatihan online dan komunitas Linux
                   </p>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={educationInView ? { opacity: 1, scale: 1 } : {}}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-br from-primary/20 to-primary-foreground/20 rounded-lg text-center"
-              >
+              <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-br from-primary/20 to-primary-foreground/20 rounded-lg text-center motion-div mobile-visible opacity-100" style={{ transform: 'none' }} id="quote-container">
                 <p className="italic text-sm sm:text-lg">
                   "Berkomitmen untuk selalu mengembangkan solusi berbasis Linux yang aman, efisien, dan andal untuk menyelesaikan tantangan teknologi."
                 </p>
-              </motion.div>
+              </div>
             </div>
           </div>
         </div>
@@ -1161,9 +1361,9 @@ export default function ResumeContent() {
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary-foreground/20 rounded-xl blur-xl"></div>
           <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-12 rounded-xl text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Collaborate?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">{t("resume.readyToCollaborate")}</h2>
             <p className="text-xl text-foreground/80 max-w-2xl mx-auto mb-8">
-              I'm always open to discussing new projects, opportunities, and collaborations.
+              {t("resume.collaborationText")}
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button 
@@ -1184,7 +1384,7 @@ export default function ResumeContent() {
                 }}
               >
                 <Mail className="mr-2 h-5 w-5" />
-                Contact Me
+                {t("resume.contactMe")}
               </Button>
               <DownloadCVButton
                 variant="outline"

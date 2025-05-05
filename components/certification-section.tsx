@@ -19,7 +19,8 @@ import {
   BookOpen, 
   Medal, 
   Star,
-  GraduationCap 
+  GraduationCap,
+  Book
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -31,6 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import CertificationPdfViewer from "@/components/certification-pdf-viewer"
 
 // Data sertifikasi dengan detail yang diperbarui
 const certifications = [
@@ -301,75 +303,59 @@ export default function CertificationSection() {
     console.log("Opening certificate details:", cert.title);
   }
 
+  // Dalam komponen CertificationSection, tambahkan function helper untuk mendapatkan URL PDF publik
+  const getPdfPublicUrl = (filename: string): string => {
+    // Mapping dari nama file asli ke path publik di /pdfs/certificates/
+    const pdfMapping: Record<string, string> = {
+      "Certified Network Security Practitioner (CNSP).pdf": "/pdfs/certificates/cnsp.pdf",
+      "Januar Galuh Certified Network Security Practitioner (CNSP).pdf": "/pdfs/certificates/cnsp.pdf",
+      "CC Certified in Cybersecurity (CC).pdf": "/pdfs/certificates/cc.pdf",
+      "CC Course Conclusion & Final Assessment.pdf": "/pdfs/certificates/cc-conclusion.pdf",
+      "CC Domain 5 Security Operations.pdf": "/pdfs/certificates/cc-domain5.pdf",
+      "CC  Domain 4 Network Security.pdf": "/pdfs/certificates/cc-domain4.pdf",
+      "CC Domain 4 Network Security.pdf": "/pdfs/certificates/cc-domain4.pdf",
+      "CC Domain 3 Access Control Concepts.pdf": "/pdfs/certificates/cc-domain3.pdf",
+      "CC Domain 2 Incident Response, Business Continuity And Disaster Recovery Concepts.pdf": "/pdfs/certificates/cc-domain2.pdf",
+      "CC Domain 1 Security Principles.pdf": "/pdfs/certificates/cc-domain1.pdf",
+    };
+    
+    // Tambahkan timestamp untuk mencegah cache
+    const timestamp = Date.now();
+    const publicPath = pdfMapping[filename] || `/pdfs/certificates/sample.pdf`;
+    
+    // Return path dengan timestamp untuk mencegah caching
+    return `${publicPath}?t=${timestamp}`;
+  }
+
   const viewPdf = (filename: string) => {
     try {
-      // Periksa apakah filename adalah milik Domain 4 Network Security
-      const isNetworkSecurityFile = filename.includes("CC Domain 4 Network Security");
+      // Dapatkan URL publik PDF
+      const pdfUrl = getPdfPublicUrl(filename);
+      console.log("Opening PDF:", pdfUrl);
       
-      // Gunakan nama file alternatif khusus untuk Network Security dengan spasi ganda
-      let finalFilename = filename;
-      if (isNetworkSecurityFile) {
-        // Perhatikan ada spasi ganda setelah "CC" (sesuai dengan nama file asli)
-        finalFilename = "CC  Domain 4 Network Security.pdf";
-        console.log("Using corrected filename for Network Security:", finalFilename);
-      }
-      
-      // Tentukan URL dasar berdasarkan environment
-      let baseUrl = '';
-      
-      // Jika running di browser
-      if (typeof window !== 'undefined') {
-        // Gunakan host dan protocol yang sama dengan halaman saat ini
-        const { protocol, hostname } = window.location;
-        const port = window.location.port || (protocol === 'https:' ? '443' : '80');
-        baseUrl = `${protocol}//${hostname}:${port}`;
-      }
-      
-      // Buat URL untuk API route
-      const pdfPath = `${baseUrl}/api/pdf?file=${encodeURIComponent(finalFilename)}`;
-      console.log("Opening PDF with API route:", pdfPath);
-      
-      // Fallback untuk port 3001 jika ada masalah dengan port default
-      const tryAlternativePort = (err: any) => {
-        console.warn("Error opening PDF with default port, trying alternative port:", err);
-        const altPort = window.location.port === '3000' ? '3001' : '3000';
-        const { protocol, hostname } = window.location;
-        const altPdfPath = `${protocol}//${hostname}:${altPort}/api/pdf?file=${encodeURIComponent(finalFilename)}`;
-        console.log("Trying alternative port:", altPdfPath);
-        window.open(altPdfPath, '_blank');
-      };
-      
+      // Tutup dialog jika terbuka
       if (isDialogOpen) {
         setIsDialogOpen(false);
         setTimeout(() => {
-          try {
-            const newWindow = window.open(pdfPath, '_blank');
-            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-              // Popup was blocked or failed
-              console.warn("Primary window open failed, trying alternative port");
-              tryAlternativePort(new Error("Window open failed or was blocked"));
-            }
-          } catch (err) {
-            tryAlternativePort(err);
+          // Open PDF in a new tab
+          const newWindow = window.open(pdfUrl, '_blank');
+          if (!newWindow) {
+            console.warn('Popup blocker mungkin mencegah pembukaan PDF');
+            alert(t("certifications.popupBlockerWarning") || 'Popup blocker mungkin mencegah pembukaan PDF. Silakan izinkan popup untuk situs ini.');
           }
         }, 300);
       } else {
-        try {
-          const newWindow = window.open(pdfPath, '_blank');
-          if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-            // Popup was blocked or failed
-            console.warn("Primary window open failed, trying alternative port");
-            tryAlternativePort(new Error("Window open failed or was blocked"));
-          }
-        } catch (err) {
-          tryAlternativePort(err);
+        // Open PDF in a new tab
+        const newWindow = window.open(pdfUrl, '_blank');
+        if (!newWindow) {
+          console.warn('Popup blocker mungkin mencegah pembukaan PDF');
+          alert(t("certifications.popupBlockerWarning") || 'Popup blocker mungkin mencegah pembukaan PDF. Silakan izinkan popup untuk situs ini.');
         }
       }
     } catch (error) {
       console.error('Error opening PDF file:', error);
-      // Tampilkan toast error jika tersedia
       if (typeof window !== "undefined") {
-        alert('Tidak dapat membuka file PDF. Silakan coba lagi.');
+        alert(t("certifications.pdfError") || 'Tidak dapat membuka file PDF. Silakan coba lagi.');
       }
     }
   }
@@ -627,7 +613,9 @@ export default function CertificationSection() {
                             <Button
                               variant="outline"
                               className="rounded-full border-primary/30 hover:border-primary/60"
-                              onClick={() => viewPdf(cert.filename)}
+                              onClick={() => {
+                                viewPdf(cert.filename);
+                              }}
                             >
                               <ExternalLink className="mr-2 h-4 w-4" />
                               {t("certifications.openPdf")}
@@ -664,317 +652,160 @@ export default function CertificationSection() {
         </div>
       </div>
 
-      <Dialog open={isModalOpen} onOpenChange={(open) => {
-        setIsModalOpen(open);
-        if (!open) {
-          setIsDialogOpen(false);
-          console.log("Dialog closed");
-        }
-      }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border border-border p-0 sm:p-6">
-          {selectedCertification && (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedCertification.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="text-foreground relative"
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.2}
-                onDragEnd={handleSwipe}
-              >
-                <div className="p-4 sm:p-0">
-                  <DialogHeader className="mb-6">
-                    <DialogTitle className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground pr-8">
-                      {selectedCertification.title}
-                    </DialogTitle>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Badge variant="outline" className="bg-primary/10 text-primary">
-                        {selectedCertification.category}
-                      </Badge>
-                      <span>•</span>
-                      <span>{selectedCertification.date}</span>
+      {isModalOpen && selectedCertification && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent 
+            className="max-w-4xl w-[95%] p-0 max-h-[90vh] flex flex-col overflow-hidden"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                console.log("Dialog escape key pressed");
+                setIsDialogOpen(false);
+              }
+            }}
+            onPointerDownOutside={(e) => {
+              console.log("Dialog pointer down outside");
+              e.preventDefault();
+              setIsDialogOpen(false);
+            }}
+          >
+            <motion.div
+              className="flex flex-col h-full"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleSwipe}
+            >
+              <DialogHeader className="p-6 pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-full bg-primary/20 p-2">
+                      <Award className="w-5 h-5 text-primary" />
                     </div>
-                  </DialogHeader>
-
-                  <div className="mt-6 relative">
-                    {/* Navigation Controls for Modal */}
+                    <DialogTitle className="text-xl font-bold">{selectedCertification.title}</DialogTitle>
+                  </div>
+                  
+                  <div className="flex gap-1">
                     {filteredCertifications.length > 1 && (
                       <>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="icon"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-10 sm:w-10 bg-background/80 backdrop-blur-sm border border-border/50 rounded-full shadow-md opacity-80 hover:opacity-100 transition-opacity"
-                          onClick={goToPrevCertificate}
-                          aria-label="Previous certificate"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            goToPrevCertificate()
+                          }}
                         >
-                          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-10 sm:w-10 bg-background/80 backdrop-blur-sm border border-border/50 rounded-full shadow-md opacity-80 hover:opacity-100 transition-opacity"
-                          onClick={goToNextCertificate}
-                          aria-label="Next certificate"
+                          variant="outline"
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            goToNextCertificate()
+                          }}
                         >
-                          <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <ChevronRight className="h-4 w-4" />
                         </Button>
                       </>
                     )}
-                    
-                    <div className="relative overflow-hidden rounded-lg mb-6 bg-card/10">
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary-foreground/5"></div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 sm:p-6 relative z-10">
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="w-full h-48 md:h-64 relative bg-black/5 backdrop-blur-sm rounded-lg overflow-hidden shadow-xl border border-primary/10">
-                            <div className="absolute inset-0 flex items-center justify-center p-4">
-                              <Image
-                                src={selectedCertification.imageSrc}
-                                alt={selectedCertification.title}
-                                width={600}
-                                height={400}
-                                className="w-auto h-auto max-w-full max-h-full object-contain transition-transform duration-500 hover:scale-105 rounded-md shadow-md"
-                              />
-                            </div>
-                            <div className="absolute bottom-0 left-0 right-0 py-2 px-3 bg-gradient-to-t from-black/70 to-transparent">
-                              <p className="text-white text-xs truncate font-medium">{selectedCertification.filename}</p>
-                            </div>
-                          </div>
-                          <div className="mt-4 flex flex-col w-full space-y-2">
-                            <Button 
-                              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all duration-300 hover:shadow-lg"
-                              onClick={() => viewPdf(selectedCertification.filename)}
-                            >
-                              <FileText className="mr-2 h-4 w-4" />
-                              {t("certifications.openPdf")}
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col justify-center">
-                          <div className="bg-card/30 backdrop-blur-md border border-card/20 p-4 rounded-lg shadow-md">
-                            <h3 className="text-lg font-semibold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground">{t("certifications.quickDetails")}</h3>
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 shadow-sm">
-                                  {selectedCertification.category}
-                                </Badge>
-                                <Badge variant="outline" className="bg-primary/5 text-foreground/70 border-primary/20 shadow-sm">
-                                  {selectedCertification.date}
-                                </Badge>
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Award className="h-4 w-4 text-primary/70" />
-                                  <p className="text-sm font-medium text-foreground/70">{t("certifications.issuedBy")}</p>
-                                </div>
-                                <p className="pl-6 font-medium">{selectedCertification.issuedBy}</p>
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <FileText className="h-4 w-4 text-primary/70" />
-                                  <p className="text-sm font-medium text-foreground/70">{t("certifications.fileDetails")}</p>
-                                </div>
-                                <p className="pl-6 text-xs text-foreground/60">PDF • {selectedCertification.filename}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {selectedCertification.highlights && (
-                            <div className="mt-4 bg-card/30 backdrop-blur-md border border-card/20 p-4 rounded-lg shadow-md">
-                              <h3 className="text-sm font-semibold mb-3 flex items-center text-foreground/80">
-                                <Medal className="h-4 w-4 mr-2 text-primary/70" />
-                                Key Highlights
-                              </h3>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {selectedCertification.highlights.map((highlight, idx) => (
-                                  <div key={idx} className="flex items-center gap-2">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-primary/70"></div>
-                                    <p className="text-sm text-foreground/70">{highlight}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                  </div>
+                </div>
+                <DialogDescription className="text-sm flex items-center mt-2">
+                  <Calendar className="h-4 w-4 mr-1.5 text-muted-foreground" />
+                  <span>{selectedCertification.date} | {selectedCertification.issuedBy}</span>
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="p-4 md:p-6 pt-0 grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-auto">
+                <div className="flex flex-col">
+                  <div className="flex flex-col gap-4 flex-1">
+                    <div className="relative rounded-lg border border-border overflow-hidden aspect-[4/3]">
+                      <Image
+                        src={selectedCertification.imageSrc}
+                        alt={selectedCertification.title}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-background/5 backdrop-blur-[1px]"></div>
+                      
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                        <h3 className="text-white font-medium text-sm">{selectedCertification.title}</h3>
+                        <p className="text-white/80 text-xs">{selectedCertification.issuedBy}</p>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="md:col-span-2">
-                        <div className="bg-card/20 backdrop-blur-sm rounded-lg p-5 mb-6 border border-primary/10 shadow-md hover:shadow-lg transition-all duration-300">
-                          <h4 className="text-lg font-semibold mb-3 flex items-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground">
-                            <BookOpen className="h-5 w-5 mr-2 text-primary" />
-                            {t("certifications.description")}
-                          </h4>
-                          <p className="text-foreground/70 mb-4 leading-relaxed">{getLocalizedDescription(selectedCertification)}</p>
-                        </div>
-
-                        <div className="bg-card/20 backdrop-blur-sm rounded-lg p-5 border border-primary/10 shadow-md hover:shadow-lg transition-all duration-300">
-                          <h4 className="text-lg font-semibold mb-4 flex items-center bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground">
-                            <GraduationCap className="h-5 w-5 mr-2 text-primary" />
-                            {t("certifications.competencies")}
-                          </h4>
-                          <ul className="space-y-3">
-                            <li className="flex items-start">
-                              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-3 mt-0.5 shadow-sm">
-                                <div className="h-2 w-2 rounded-full bg-primary"></div>
-                              </div>
-                              <div>
-                                <p className="text-foreground/80 font-medium">{t("certifications.competency1")}</p>
-                                <p className="text-sm text-foreground/60 mt-1">Understanding the core principles that guide security decisions and implementations</p>
-                              </div>
-                            </li>
-                            <li className="flex items-start">
-                              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-3 mt-0.5 shadow-sm">
-                                <div className="h-2 w-2 rounded-full bg-primary"></div>
-                              </div>
-                              <div>
-                                <p className="text-foreground/80 font-medium">{t("certifications.competency2")}</p>
-                                <p className="text-sm text-foreground/60 mt-1">Applying proactive measures to reduce vulnerabilities before they can be exploited</p>
-                              </div>
-                            </li>
-                            <li className="flex items-start">
-                              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-3 mt-0.5 shadow-sm">
-                                <div className="h-2 w-2 rounded-full bg-primary"></div>
-                              </div>
-                              <div>
-                                <p className="text-foreground/80 font-medium">{t("certifications.competency3")}</p>
-                                <p className="text-sm text-foreground/60 mt-1">Selecting and configuring appropriate security technologies based on requirements</p>
-                              </div>
-                            </li>
-                            <li className="flex items-start">
-                              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center mr-3 mt-0.5 shadow-sm">
-                                <div className="h-2 w-2 rounded-full bg-primary"></div>
-                              </div>
-                              <div>
-                                <p className="text-foreground/80 font-medium">{t("certifications.competency4")}</p>
-                                <p className="text-sm text-foreground/60 mt-1">Following structured approaches to contain, investigate, and remediate security incidents</p>
-                              </div>
-                            </li>
-                          </ul>
-                        </div>
-
-                        <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-                          <Button
-                            variant="outline"
-                            className="rounded-full border-primary/30 hover:border-primary/60 w-full sm:w-auto shadow-sm hover:shadow-md transition-all duration-300"
-                            onClick={() => setIsModalOpen(false)}
-                          >
-                            {t("certifications.back")}
-                          </Button>
-                          
-                          {filteredCertifications.length > 1 && (
-                            <div className="flex justify-center space-x-1.5 mx-2 order-first sm:order-none w-full">
-                              {filteredCertifications.map((_, index) => (
-                                <button
-                                  key={index}
-                                  onClick={() => {
-                                    setSelectedCertIndex(index);
-                                    setSelectedCertification(filteredCertifications[index]);
-                                  }}
-                                  className={`h-2 transition-all duration-300 rounded-full ${
-                                    selectedCertIndex === index 
-                                      ? "w-6 sm:w-8 bg-primary shadow-sm" 
-                                      : "w-2 bg-primary/30 hover:bg-primary/50"
-                                  }`}
-                                  aria-label={`Go to certificate ${index + 1}`}
-                                />
-                              ))}
-                            </div>
-                          )}
-                          
-                          <Button
-                            className="rounded-full btn-premium w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-300"
-                            onClick={() => {
-                              viewPdf(selectedCertification.filename);
-                              setIsModalOpen(false);
-                            }}
-                          >
-                            <FileText className="mr-2 h-4 w-4" />
-                            {t("certifications.openPdf")}
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="bg-card/30 backdrop-blur-md border border-card/20 p-5 rounded-lg mb-4 shadow-md hover:shadow-lg transition-all duration-300">
-                          <h4 className="text-md font-semibold mb-4 border-b border-primary/10 pb-2 flex items-center">
-                            <Tag className="h-4 w-4 mr-2 text-primary/80" />
-                            {t("certifications.details")}
-                          </h4>
-                          <div className="space-y-4">
-                            <div>
-                              <div className="flex items-center mb-1">
-                                <div className="w-1 h-1 rounded-full bg-primary mr-2"></div>
-                                <p className="text-sm font-medium text-foreground/70">{t("certifications.issuedBy")}</p>
-                              </div>
-                              <p className="pl-3 font-medium text-primary">{selectedCertification.issuedBy}</p>
-                            </div>
-                            <div>
-                              <div className="flex items-center mb-1">
-                                <div className="w-1 h-1 rounded-full bg-primary mr-2"></div>
-                                <p className="text-sm font-medium text-foreground/70">{t("certifications.date")}</p>
-                              </div>
-                              <p className="pl-3">{selectedCertification.date}</p>
-                            </div>
-                            <div>
-                              <div className="flex items-center mb-1">
-                                <div className="w-1 h-1 rounded-full bg-primary mr-2"></div>
-                                <p className="text-sm font-medium text-foreground/70">{t("certifications.category")}</p>
-                              </div>
-                              <p className="pl-3">{selectedCertification.category}</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-card/30 backdrop-blur-md border border-card/20 p-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
-                          <h4 className="text-md font-semibold mb-4 border-b border-primary/10 pb-2 flex items-center">
-                            <Star className="h-4 w-4 mr-2 text-primary/80" />
-                            {t("certifications.expertise")}
-                          </h4>
-                          <div className="flex flex-wrap gap-2">
-                            {selectedCertification.tags.map((tag) => (
-                              <Badge 
-                                key={tag} 
-                                variant="outline" 
-                                className="bg-primary/5 border-primary/20 text-foreground hover:bg-primary/10 transition-colors py-1.5 shadow-sm"
-                              >
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                          
-                          <div className="mt-6 pt-4 border-t border-primary/10">
-                            <h4 className="text-sm font-medium text-foreground/70 mb-2 flex items-center">
-                              <BookOpen className="h-4 w-4 mr-2 text-primary/70" />
-                              {t("certifications.quickLinks")}
-                            </h4>
-                            <div className="space-y-2">
-                              <Button 
-                                variant="ghost" 
-                                className="w-full justify-start p-2 h-auto text-sm hover:bg-primary/5 group"
-                                onClick={() => viewPdf(selectedCertification.filename)}
-                              >
-                                <FileText className="h-4 w-4 mr-2 text-primary group-hover:scale-110 transition-transform duration-300" />
-                                {t("certifications.viewCertificate")}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
+                    <div>
+                      <h3 className="text-lg font-bold mb-2 flex items-center">
+                        <Book className="h-5 w-5 mr-2 text-primary" />
+                        {t("certifications.description")}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {getLocalizedDescription(selectedCertification)}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-bold mb-2 flex items-center">
+                        <Star className="h-5 w-5 mr-2 text-primary" />
+                        {t("certifications.highlights")}
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                        {selectedCertification.highlights.map((highlight, index) => (
+                          <li key={index}>{highlight}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="mt-auto">
+                      <h3 className="text-lg font-bold mb-2 flex items-center">
+                        <Tag className="h-5 w-5 mr-2 text-primary" />
+                        {t("certifications.tags")}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedCertification.tags.map((tag) => (
+                          <Badge key={tag} variant="outline">
+                            {tag}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
                   </div>
+                  
+                  <div className="mt-4 flex gap-2">
+                    <Button 
+                      className="flex-1 gap-1" 
+                      onClick={() => viewPdf(selectedCertification.filename)}
+                    >
+                      <FileText className="h-4 w-4" />
+                      {t("certifications.openPdf")}
+                    </Button>
+                  </div>
                 </div>
-              </motion.div>
-            </AnimatePresence>
-          )}
-        </DialogContent>
-      </Dialog>
+                
+                <div className="bg-muted rounded-lg p-4 flex items-center justify-center overflow-hidden">
+                  <div className="w-full h-full relative">
+                    <CertificationPdfViewer 
+                      pdfUrl={getPdfPublicUrl(selectedCertification.filename)}
+                      isOpen={true}
+                      onClose={() => {
+                        console.log("PDF viewer closed from section");
+                        setIsDialogOpen(false);
+                      }}
+                      title={selectedCertification.title}
+                      issuedBy={selectedCertification.issuedBy}
+                      date={selectedCertification.date}
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </DialogContent>
+        </Dialog>
+      )}
     </section>
   )
 } 

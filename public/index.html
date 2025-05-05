@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Januar Galuh Prabakti - Portfolio Website" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/logo192.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Januar Galuh Prabakti - Portfolio</title>
+  
+  <!-- PDF.js Worker preload -->
+  <link rel="preload" href="/pdf.worker.min.js" as="script" crossorigin="anonymous" />
+  <script>
+    // PDF.js Worker Fallback System
+    (function() {
+      const PDFJS_VERSION = '5.2.133';
+      const workerUrls = [
+        "/pdf.worker.min.js",
+        `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js`,
+        `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js`,
+        `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js`
+      ];
+
+      let loaded = false;
+
+      // Set default options for PDF.js
+      window.PDFViewerOptions = {
+        cMapUrl: `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/cmaps/`,
+        cMapPacked: true,
+        standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/standard_fonts/`
+      };
+
+      // Pre-check if we can fetch the local worker
+      if ('fetch' in window) {
+        fetch('/pdf.worker.min.js', { method: 'HEAD' })
+          .then(response => {
+            if (response.ok) {
+              console.log("PDF.js local worker verified ✓");
+            } else {
+              console.warn("Local PDF.js worker not available, CDN will be used");
+            }
+          })
+          .catch(e => {
+            console.warn("Error checking local PDF.js worker:", e.message);
+          });
+      }
+    })();
+  </script>
+</head>
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+</body>
+</html> 

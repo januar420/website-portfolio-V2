@@ -15,40 +15,73 @@ Ini adalah website portfolio profesional Januar Galuh Prabakti.
 
 ## Cara Deploy ke Netlify
 
-### Metode 1: Deploy Manual (Recommended)
+### Metode 1: Menggunakan Script Otomatis
 
-1. Build aplikasi:
-   ```bash
-   npm run build
+Proyek ini dilengkapi dengan script otomatisasi untuk memudahkan deployment:
+
+1. Di Windows (PowerShell):
+   ```powershell
+   ./scripts/deploy-netlify.ps1
    ```
 
-2. Deploy folder `.next` ke Netlify melalui drag-and-drop:
-   - Login ke [Netlify](https://app.netlify.com/)
-   - Drag-and-drop folder `.next` ke area deployment Netlify
+2. Di Linux/macOS (bash):
+   ```bash
+   bash ./scripts/deploy.sh
+   ```
 
-3. Konfigurasi build settings:
-   - Buka site settings
-   - Pilih "Build & deploy"
-   - Di bagian "Environment variables", tambahkan variable berikut:
-     ```
-     NEXT_PUBLIC_EMAILJS_SERVICE_ID=service_5mk1t2z
-     NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=template_yj3blyg
-     NEXT_PUBLIC_EMAILJS_USER_ID=WrdMD5erXU1TjP0SR
-     ```
+Script otomatis akan:
+- Membersihkan build sebelumnya
+- Memverifikasi keberadaan file PDF worker
+- Mengonfigurasi build dengan environment yang benar
+- Menjalankan build khusus untuk Netlify
+- Mempersiapkan file yang diperlukan (redirects, CORS, dll)
+- Menjalankan deployment ke Netlify
 
-### Metode 2: Deploy via Git
+### Metode 2: Deploy Manual
 
-1. Push kode ke repository Git (GitHub, GitLab, atau Bitbucket)
+1. Siapkan environment dan build aplikasi:
+   ```bash
+   # Di PowerShell
+   $env:DEPLOY_TARGET="netlify"
+   npm run build:netlify
+   npm run prepare-netlify
+   
+   # Di bash
+   export DEPLOY_TARGET=netlify
+   npm run build:netlify
+   npm run prepare-netlify
+   ```
 
-2. Di dashboard Netlify:
-   - Klik "New site from Git"
-   - Pilih repository
-   - Masukkan konfigurasi build:
-     - Build command: `npm run build`
-     - Publish directory: `.next`
-   - Tambahkan variable lingkungan yang sama seperti di metode 1
+2. Install Netlify CLI jika belum:
+   ```bash
+   npm install -g netlify-cli
+   ```
 
-3. Klik "Deploy site"
+3. Login ke Netlify dan deploy:
+   ```bash
+   netlify login
+   netlify deploy --dir=out
+   
+   # Jika sudah puas dengan preview, deploy ke produksi:
+   netlify deploy --prod --dir=out
+   ```
+
+### Metode 3: Deploy via GitHub Actions
+
+Proyek ini mencakup konfigurasi GitHub Actions untuk CI/CD ke Netlify:
+
+1. Di repository GitHub, buka tab "Settings" > "Secrets"
+2. Tambahkan secrets berikut:
+   - `NETLIFY_AUTH_TOKEN`: Token autentikasi dari dashboard Netlify
+   - `NETLIFY_SITE_ID`: ID site Netlify (ditemukan di Site settings > Site information)
+3. Push ke branch `main` akan memicu build dan deploy otomatis
+
+### Catatan Penting untuk Netlify
+
+- PDF Viewer memerlukan file worker (`pdf.worker.min.js`) yang ditempatkan dengan benar
+- Header CORS perlu dikonfigurasi untuk worker file (sudah ditangani dalam `netlify.toml`)
+- Redirect diperlukan untuk Single Page Application (sudah ditangani dalam `_redirects`)
+- Pastikan variabel lingkungan EmailJS dikonfigurasi di dashboard Netlify
 
 ## Struktur Proyek
 

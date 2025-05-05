@@ -37,6 +37,12 @@
     --ring: 240 5.9% 10%;
 
     --radius: 0.5rem;
+
+    --vh: 1vh;
+    --bio-in-view: 0;
+    --skills-in-view: 0;
+    --experience-in-view: 0;
+    --education-in-view: 0;
   }
 
   .dark {
@@ -291,5 +297,139 @@ html {
     linear-gradient(to right, rgba(var(--primary-rgb), 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(var(--primary-rgb), 0.05) 1px, transparent 1px);
   background-size: 8px 8px;
+}
+
+/* Mobile viewport fix */
+@media (max-width: 640px) {
+  .mobile-visible {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  
+  /* Fix untuk safari mobile */
+  .min-h-screen {
+    min-height: 100vh; /* Fallback */
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  /* Memastikan Education & Projects section selalu terlihat pada mobile */
+  [data-section="education"] {
+    opacity: var(--education-in-view, 0);
+    transform: translateY(var(--education-in-view, 0) * 0px) !important;
+  }
+  
+  /* Force semua elemen dalam Education section untuk terlihat */
+  [data-section="education"] .motion-div {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+    display: block !important;
+  }
+  
+  /* Pastikan semua container sections terlihat */
+  #education-col, #projects-col, 
+  #certifications-container, #projects-container, 
+  #self-dev-container, #quote-container {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+  
+  /* Perbaikan padding untuk layout mobile */
+  .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  /* Mengurangi margin pada mobile */
+  .mb-24 {
+    margin-bottom: 3rem !important;
+  }
+  
+  .mb-20 {
+    margin-bottom: 2rem !important;
+  }
+  
+  .mb-12 {
+    margin-bottom: 1.5rem !important;
+  }
+}
+
+/* Mengurangi kompleksitas visual pada perangkat mobile */
+@media (max-width: 480px) {
+  .reduce-motion {
+    transition-duration: 0.2s !important;
+    animation-duration: 0.2s !important;
+  }
+  
+  .disable-animation {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .simplified-bg {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3)) !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Force elemen motion-div untuk terlihat pada mobile */
+  .motion-div {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+  
+  /* Memperbaiki masalah pada iOS */
+  .can-disable-on-mobile {
+    display: none !important;
+  }
+  
+  /* Memperbaiki ukuran font dan spacing */
+  h1, h2, h3 {
+    word-break: break-word;
+  }
+  
+  /* Perbaiki ukuran padding */
+  .p-8, .p-6 {
+    padding: 1rem !important;
+  }
+  
+  /* Perbaiki height untuk header */
+  .h-\[350px\] {
+    height: 250px !important;
+  }
+}
+
+/* Mobile optimization class applied by wrapper */
+.mobile-optimized .motion-div,
+body.mobile-optimized .motion-div,
+body.is-mobile-device .motion-div {
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.mobile-optimized [data-section="education"],
+body.mobile-optimized [data-section="education"],
+body.is-mobile-device [data-section="education"] {
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+}
+
+/* Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix Safari iOS height issues */
+  .min-h-screen {
+    height: -webkit-fill-available;
+  }
+  
+  /* Force Education section to be visible on Safari */
+  [data-section="education"] {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
 }
 

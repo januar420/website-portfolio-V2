@@ -1,127 +1,145 @@
 # Panduan Deployment ke Netlify
 
-## Langkah 1: Persiapan Repositori GitHub
+Panduan ini akan menjelaskan cara melakukan deployment website portfolio ke Netlify dengan benar, memastikan semua fitur berfungsi dengan baik termasuk PDF viewer dan download CV.
 
-Pastikan Anda sudah memiliki repositori GitHub dengan kode website portfolio Anda. Jika belum:
+## Prasyarat
 
-1. Ikuti panduan di [GITHUB_DEPLOYMENT_GUIDE.md](GITHUB_DEPLOYMENT_GUIDE.md) untuk membuat dan push repositori ke GitHub.
-2. Pastikan kode terbaru sudah di-push ke GitHub.
+- NodeJS versi 18 atau lebih baru
+- NPM versi 9 atau lebih baru
+- Git (opsional, untuk clone repository)
+- Akun Netlify
 
-## Langkah 2: Membuat Akun Netlify
+## Langkah 1: Persiapan Repository
 
-1. Kunjungi [Netlify](https://www.netlify.com/) dan buat akun jika belum memilikinya.
-2. Anda dapat mendaftar dengan akun GitHub Anda untuk memudahkan proses integrasi.
+Pastikan repository sudah siap dengan konfigurasi yang benar:
 
-## Langkah 3: Menghubungkan Netlify dengan Repositori GitHub
+1. File `next.config.mjs` dengan konfigurasi untuk Netlify
+2. File `netlify.toml` untuk konfigurasi deployment
+3. File `package.json` dengan script yang diperlukan
+4. File worker PDF.js di direktori `public/`
 
-1. Login ke dashboard Netlify.
-2. Klik tombol "Add new site" dan pilih "Import an existing project".
-3. Pilih "GitHub" sebagai penyedia Git Anda.
-4. Berikan akses Netlify ke akun GitHub Anda.
-5. Pilih repositori website portfolio yang ingin Anda deploy.
-
-## Langkah 4: Konfigurasi Build
-
-Masukkan pengaturan build sebagai berikut:
-
-- **Build command**: `npm run build`
-- **Publish directory**: `.next`
-
-Pastikan kedua nilai ini sudah benar karena sangat penting untuk proses deployment.
-
-## Langkah 5: Konfigurasi Environment Variables
-
-1. Setelah site dibuat, buka pengaturan site Anda.
-2. Pilih "Build & deploy" > "Environment".
-3. Klik "Edit variables" dan tambahkan variabel berikut:
-
-```
-NEXT_PUBLIC_EMAILJS_SERVICE_ID=service_5mk1t2z
-NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=template_yj3blyg
-NEXT_PUBLIC_EMAILJS_USER_ID=WrdMD5erXU1TjP0SR
-```
-
-## Langkah 6: Deploy Site
-
-1. Klik "Deploy site" untuk memulai proses deployment.
-2. Netlify akan otomatis memulai proses build dan deployment.
-3. Tunggu hingga proses selesai (biasanya memakan waktu 2-5 menit).
-
-## Langkah 7: Kustomisasi Domain (Opsional)
-
-Netlify memberi Anda domain acak seperti `random-name-123456.netlify.app`. Untuk kustomisasi:
-
-1. Di dashboard site, pilih "Domain settings".
-2. Anda dapat:
-   - Mengubah subdomain Netlify: Klik "Options" > "Edit site name"
-   - Menambahkan domain kustom: Klik "Add custom domain"
-
-### Menggunakan Domain Kustom
-
-1. Masukkan domain yang sudah Anda miliki.
-2. Netlify akan memberikan instruksi untuk mengkonfigurasi DNS.
-3. Konfigurasi DNS di provider domain Anda sesuai instruksi.
-4. Netlify otomatis menyediakan SSL/TLS untuk domain kustom Anda.
-
-## Langkah 8: Konfigurasi CORS untuk EmailJS
-
-Agar formulir kontak berfungsi dengan baik:
-
-1. Login ke [dashboard EmailJS](https://dashboard.emailjs.com/)
-2. Buka menu "Integration" > "Website Integration"
-3. Tambahkan domain Netlify Anda (misalnya: `https://your-site.netlify.app`)
-4. Jika menggunakan domain kustom, tambahkan juga domain tersebut.
-
-## Continuous Deployment
-
-Netlify mendukung Continuous Deployment (CD), artinya:
-
-1. Setiap kali Anda push perubahan ke branch utama (main) di GitHub
-2. Netlify otomatis mendeteksi perubahan tersebut
-3. Site akan di-build dan di-deploy ulang secara otomatis
-
-Untuk menonaktifkan fitur ini, buka site settings > Build & deploy > Continuous Deployment dan pilih "Stop auto publishing".
-
-## Pemecahan Masalah
-
-### Build Gagal
-
-1. Periksa log build di dashboard Netlify untuk melihat error.
-2. Pastikan build berhasil secara lokal dengan `npm run build`.
-3. Periksa versi Node.js yang digunakan:
-   - Di Netlify: Site settings > Build & deploy > Environment > Environment variables
-   - Tambahkan variabel `NODE_VERSION` dengan nilai `20` atau sesuai kebutuhan proyek.
-
-### Masalah dengan Font
-
-1. Jalankan `npm run refresh-fonts` secara lokal sebelum push ke GitHub.
-2. Tambahkan font ke folder public/fonts dan pastikan diimport dengan benar di CSS.
-
-### Error Terkait API atau EmailJS
-
-1. Periksa bahwa semua variabel lingkungan sudah dikonfigurasi dengan benar.
-2. Pastikan domain sudah terdaftar di EmailJS untuk menghindari masalah CORS.
-
-### Menonaktifkan Website 
-
-1. Di dashboard Netlify, buka site Anda
-2. Klik "Site settings" > "General" > "Site details"
-3. Scroll ke bawah dan klik "Delete this site"
-
-## Menjalankan Deployment Manual
-
-Jika Anda ingin men-deploy secara manual tanpa melalui GitHub:
+## Langkah 2: Instalasi Dependensi
 
 ```bash
-# Build website
-npm run build
-
-# Deploy ke Netlify
-npm run deploy:netlify
+# Pastikan Anda berada di direktori proyek
+npm install
 ```
 
-## Sumber Daya Tambahan
+## Langkah 3: Build dan Deploy
 
-- [Dokumentasi Netlify untuk Next.js](https://docs.netlify.com/integrations/frameworks/next-js/overview/)
-- [Netlify CLI](https://docs.netlify.com/cli/get-started/)
-- [Troubleshooting Netlify Builds](https://docs.netlify.com/configure-builds/troubleshooting-tips/) 
+### Opsi 1: Menggunakan Script Otomatis
+
+Script otomatis yang telah disediakan akan melakukan semua langkah yang diperlukan untuk build dan deploy:
+
+```bash
+# Di Windows (PowerShell)
+./scripts/deploy.sh
+
+# Di Unix/Linux/macOS
+bash ./scripts/deploy.sh
+```
+
+### Opsi 2: Langkah Manual
+
+Jika Anda ingin melakukan langkah-langkah secara manual:
+
+1. Bersihkan build sebelumnya:
+   ```bash
+   npm run clean
+   ```
+
+2. Build aplikasi untuk Netlify:
+   ```bash
+   $env:DEPLOY_TARGET="netlify" # Di PowerShell
+   # ATAU
+   export DEPLOY_TARGET=netlify # Di Bash/Linux/macOS
+   
+   npm run build:netlify
+   ```
+
+3. Persiapkan file untuk Netlify:
+   ```bash
+   npm run prepare-netlify
+   ```
+
+4. Deploy ke Netlify:
+   ```bash
+   # Jika Netlify CLI belum terinstal
+   npm install -g netlify-cli
+   
+   # Login ke Netlify (jika belum)
+   netlify login
+   
+   # Deploy (draft)
+   netlify deploy --dir=out
+   
+   # Deploy ke produksi
+   netlify deploy --prod --dir=out
+   ```
+
+## Langkah 4: Konfigurasi di Dashboard Netlify
+
+Setelah deployment selesai, ada beberapa pengaturan yang perlu dikonfigurasi di dashboard Netlify:
+
+1. Buka dashboard Netlify dan pilih site yang baru di-deploy
+2. Buka tab **Site settings**
+3. Pastikan domain sudah dikonfigurasi dengan benar
+4. Di bagian **Build & deploy**:
+   - Build command: `npm run build:netlify && npm run prepare-netlify`
+   - Publish directory: `out`
+   - Environment variables:
+     - `DEPLOY_TARGET`: `netlify`
+
+## Troubleshooting
+
+Jika terjadi masalah dengan PDF viewer atau download CV, periksa hal berikut:
+
+### 1. File PDF Worker Tidak Ditemukan
+
+Pastikan file `pdf.worker.min.js` ada di direktori `out/` setelah build. Jika tidak, jalankan kembali:
+
+```bash
+npm run prepare-netlify
+```
+
+### 2. Masalah CORS dengan PDF Worker
+
+Periksa file `netlify.toml` dan pastikan header CORS untuk PDF worker sudah diatur dengan benar:
+
+```toml
+[[headers]]
+  for = "/pdf.worker.min.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Content-Type = "application/javascript"
+```
+
+### 3. Build Error
+
+Jika terjadi error saat build, periksa:
+- Dependensi yang hilang
+- Versi NodeJS dan NPM
+- File konfigurasi Next.js
+
+## Pemeliharaan
+
+Untuk memperbarui website yang sudah di-deploy:
+
+1. Lakukan perubahan yang diperlukan pada kode
+2. Commit perubahan ke Git (opsional)
+3. Jalankan kembali script deploy:
+   ```bash
+   ./scripts/deploy.sh
+   ```
+
+## Catatan Tambahan
+
+- PDF viewer membutuhkan file worker yang benar untuk berfungsi dengan baik
+- File `_redirects` diperlukan untuk SPA routing di Netlify
+- File `404.html` memberikan halaman error yang lebih baik
+
+## Referensi
+
+- [Dokumentasi Netlify](https://docs.netlify.com/)
+- [Dokumentasi Next.js untuk Static Export](https://nextjs.org/docs/pages/building-your-application/deploying/static-exports)
+- [PDF.js Documentation](https://mozilla.github.io/pdf.js/) 

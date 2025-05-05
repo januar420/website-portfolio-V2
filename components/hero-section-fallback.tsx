@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "./language-provider";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { mainHeadingText } from "@/app/page";
 
-export default function HeroSectionFallback() {
+// Interface untuk props
+interface HeroSectionFallbackProps {
+  mainHeadingText?: string;
+}
+
+export default function HeroSectionFallback({ mainHeadingText = "IT & Cyber Security Enthusiast" }: HeroSectionFallbackProps) {
   const { language, t } = useLanguage();
 
   return (

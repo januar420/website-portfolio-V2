@@ -2,68 +2,77 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTheme } from "next-themes"
 
 export default function PremiumCursor() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [cursorVariant, setCursorVariant] = useState("default")
   const [isVisible, setIsVisible] = useState(false)
+  const { theme } = useTheme()
 
   useEffect(() => {
-    // Only enable custom cursor on desktop
-    if (window.innerWidth < 768) return
-
     const mouseMove = (e: MouseEvent) => {
       setMousePosition({
         x: e.clientX,
         y: e.clientY,
       })
-
-      if (!isVisible) setIsVisible(true)
-    }
-
-    const handleMouseEnter = () => {
-      setCursorVariant("default")
-    }
-
-    const handleMouseLeave = () => {
-      setIsVisible(false)
-    }
-
-    const handleLinkHover = () => {
-      setCursorVariant("link")
-    }
-
-    const handleLinkLeave = () => {
-      setCursorVariant("default")
-    }
-
-    const handleButtonHover = () => {
-      setCursorVariant("button")
-    }
-
-    const handleButtonLeave = () => {
-      setCursorVariant("default")
     }
 
     window.addEventListener("mousemove", mouseMove)
+    setIsVisible(true)
+
+    return () => {
+      window.removeEventListener("mousemove", mouseMove)
+    }
+  }, [])
+
+  const handleMouseEnter = () => {
+    setIsVisible(true)
+  }
+
+  const handleMouseLeave = () => {
+    setIsVisible(false)
+  }
+
+  const handleLinkHover = () => {
+    setCursorVariant("link")
+  }
+
+  const handleLinkLeave = () => {
+    setCursorVariant("default")
+  }
+
+  const handleButtonHover = () => {
+    setCursorVariant("button")
+  }
+
+  const handleButtonLeave = () => {
+    setCursorVariant("default")
+  }
+
+  useEffect(() => {
+    document.documentElement.classList.add("use-custom-cursor")
+
+    // Track mouse enter/leave events on the document
     document.addEventListener("mouseenter", handleMouseEnter)
     document.addEventListener("mouseleave", handleMouseLeave)
 
-    // Add event listeners to all links and buttons
-    const links = document.querySelectorAll("a, button, .cursor-link")
+    // Add event listeners to all links
+    const links = document.querySelectorAll("a, button, [role='button']")
     links.forEach((link) => {
       link.addEventListener("mouseenter", handleLinkHover)
       link.addEventListener("mouseleave", handleLinkLeave)
     })
 
-    const buttons = document.querySelectorAll(".btn-premium, .cursor-button")
+    // Add event listeners to buttons with specific cursor class
+    const buttons = document.querySelectorAll(".cursor-button")
     buttons.forEach((button) => {
       button.addEventListener("mouseenter", handleButtonHover)
       button.addEventListener("mouseleave", handleButtonLeave)
     })
 
     return () => {
-      window.removeEventListener("mousemove", mouseMove)
+      document.documentElement.classList.remove("use-custom-cursor")
       document.removeEventListener("mouseenter", handleMouseEnter)
       document.removeEventListener("mouseleave", handleMouseLeave)
 
@@ -77,26 +86,27 @@ export default function PremiumCursor() {
         button.removeEventListener("mouseleave", handleButtonLeave)
       })
     }
-  }, [isVisible])
+  }, [])
 
+  // Definisikan variants dengan tipe yang tepat
   const variants = {
     default: {
       x: mousePosition.x - 16,
       y: mousePosition.y - 16,
       height: 32,
       width: 32,
-      backgroundColor: "rgba(var(--primary-rgb), 0.1)",
-      borderColor: "rgba(var(--primary-rgb), 0.3)",
-      mixBlendMode: "difference",
+      backgroundColor: "transparent",
+      borderColor: "rgba(var(--primary-rgb), 0.4)",
+      mixBlendMode: "difference" as const,
     },
     link: {
       x: mousePosition.x - 24,
       y: mousePosition.y - 24,
       height: 48,
       width: 48,
-      backgroundColor: "rgba(var(--primary-rgb), 0.15)",
-      borderColor: "rgba(var(--primary-rgb), 0.5)",
-      mixBlendMode: "difference",
+      backgroundColor: "rgba(var(--primary-rgb), 0.1)",
+      borderColor: "rgba(var(--primary-rgb), 0.4)",
+      mixBlendMode: "difference" as const,
     },
     button: {
       x: mousePosition.x - 32,
@@ -105,7 +115,7 @@ export default function PremiumCursor() {
       width: 64,
       backgroundColor: "rgba(var(--primary-rgb), 0.05)",
       borderColor: "rgba(var(--primary-rgb), 0.2)",
-      mixBlendMode: "difference",
+      mixBlendMode: "difference" as const,
     },
   }
 
@@ -119,7 +129,6 @@ export default function PremiumCursor() {
             animate={cursorVariant}
             transition={{ type: "spring", stiffness: 500, damping: 28, mass: 0.5 }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           />
           <motion.div

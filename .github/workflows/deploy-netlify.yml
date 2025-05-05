@@ -1,0 +1,83 @@
+name: Deploy to Netlify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Secrets yang digunakan:
+# - NETLIFY_AUTH_TOKEN: Token autentikasi Netlify untuk deployment
+# - NETLIFY_SITE_ID: ID situs Netlify untuk target deployment
+# - GITHUB_TOKEN: Token GitHub yang disediakan otomatis oleh GitHub Actions
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          
+      - name: Install dependencies 📦
+        run: npm ci
+      
+      - name: Verify Netlify CLI 🧪
+        run: |
+          echo "Installing Netlify CLI for deployment validation"
+          npm install -g netlify-cli
+          netlify --version
+      
+      - name: Build 🏗️
+        run: npm run build
+        env:
+          NEXT_PUBLIC_EMAILJS_SERVICE_ID: service_5mk1t2z
+          NEXT_PUBLIC_EMAILJS_TEMPLATE_ID: template_yj3blyg
+          NEXT_PUBLIC_EMAILJS_USER_ID: WrdMD5erXU1TjP0SR
+          # Menambahkan log level untuk debugging
+          NODE_ENV: production
+          DEBUG: "netlify:*"
+      
+      - name: Check build output 📋
+        run: |
+          echo "Verifying build output directory"
+          ls -la out/
+          echo "Total files in build output: $(find out/ -type f | wc -l)"
+        
+      - name: Prepare for Netlify 🔧
+        run: |
+          echo "Running prepare-netlify.js script"
+          node scripts/prepare-netlify.js
+          
+          if [ -f "netlify.toml" ]; then
+            echo "Netlify configuration found:"
+            cat netlify.toml
+          else
+            echo "Warning: netlify.toml not found!"
+            echo "Creating minimal netlify.toml file"
+            echo '[build]' > netlify.toml
+            echo '  publish = "out"' >> netlify.toml
+          fi
+        
+      - name: Deploy to Netlify 🚀
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: './out'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions - ${{ github.event.head_commit.message || 'Manual workflow dispatch' }}"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+          netlify-config-path: ./netlify.toml
+          fails-without-credentials: true
+        env:
+          # Secrets akan tersedia saat runtime di GitHub Actions
+          NETLIFY_AUTH_TOKEN: '${{ secrets.NETLIFY_AUTH_TOKEN }}'
+          NETLIFY_SITE_ID: '${{ secrets.NETLIFY_SITE_ID }}'
+        timeout-minutes: 5 

@@ -34,29 +34,7 @@ export default function ScrollIndicator() {
         style={{ scaleX, transformOrigin: "0%" }}
       />
       
-      {/* Indikator posisi scroll dengan animasi fade in */}
-      <motion.div 
-        className="fixed bottom-6 right-6 bg-background/80 backdrop-blur-sm border border-border rounded-full p-2 z-50"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ 
-          opacity: isScrolled ? 1 : 0,
-          y: isScrolled ? 0 : 20
-        }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="text-xs font-mono flex items-center justify-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center">
-            <motion.div style={{ rotate: scrollYProgress.get() * 360 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </motion.div>
-          </div>
-          <motion.span className="hidden sm:block">
-            {Math.round(scrollYProgress.get() * 100)}%
-          </motion.span>
-        </div>
-      </motion.div>
+      {/* Tombol zoom telah dihapus dari sini */}
     </>
   )
 } 

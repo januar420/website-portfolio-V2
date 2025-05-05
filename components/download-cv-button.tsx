@@ -6,6 +6,7 @@ import { Download } from "lucide-react"
 import { generateResumePDF } from "@/utils/generate-pdf"
 import { motion } from "framer-motion"
 import { toast } from "@/hooks/use-toast"
+import { useLanguage } from "./language-provider"
 
 interface DownloadCVButtonProps {
   variant?: "default" | "outline" | "secondary" | "ghost" | "link"
@@ -18,6 +19,7 @@ export default function DownloadCVButton({
   size = "default",
   className = "",
 }: DownloadCVButtonProps) {
+  const { t } = useLanguage()
   const [isDownloading, setIsDownloading] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -26,14 +28,14 @@ export default function DownloadCVButton({
     try {
       await generateResumePDF()
       toast({
-        title: "Success!",
-        description: "Your CV has been downloaded successfully",
+        title: t("resume.downloadSuccess"),
+        description: t("resume.downloadSuccessDesc"),
       })
     } catch (error) {
       console.error("Error downloading CV:", error)
       toast({
-        title: "Error",
-        description: "Failed to download CV. Please try again later.",
+        title: t("resume.downloadError"),
+        description: t("resume.downloadErrorDesc"),
         variant: "destructive",
       })
     } finally {
@@ -67,12 +69,12 @@ export default function DownloadCVButton({
         {isDownloading ? (
           <>
             <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
-            Downloading...
+            {t("resume.downloading")}
           </>
         ) : (
           <>
             <Download className="mr-2 h-4 w-4" />
-            Download CV
+            {t("resume.downloadCV")}
           </>
         )}
       </Button>

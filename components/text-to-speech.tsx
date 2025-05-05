@@ -261,18 +261,20 @@ export default function TextToSpeech({ text, className }: TextToSpeechProps) {
                     <label htmlFor="voice" className="text-sm font-medium leading-none col-span-1">
                       Suara
                     </label>
-                    <Select value={selectedVoice} onValueChange={handleVoiceChange} className="col-span-3">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih suara" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-40">
-                        {voices.map((voice) => (
-                          <SelectItem key={voice.name} value={voice.name}>
-                            {voice.name} ({voice.lang})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="col-span-3">
+                      <Select value={selectedVoice} onValueChange={handleVoiceChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih suara" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-40">
+                          {voices.map((voice) => (
+                            <SelectItem key={voice.name} value={voice.name}>
+                              {voice.name} ({voice.lang})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-4 items-center gap-4">

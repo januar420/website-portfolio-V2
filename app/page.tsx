@@ -14,8 +14,14 @@ import ProfessionalValues from "@/components/premium-testimonials"
 import PremiumAchievements from "@/components/premium-achievements"
 import ScrollIndicator from "@/components/scroll-indicator"
 
-// Mengubah judul yang ditampilkan pada section utama
-export const mainHeadingText = "IT & Cyber Security Enthusiast"
+// Judul yang ditampilkan pada section utama (dipindah ke dalam komponen)
+const MAIN_HEADING_TEXT = "IT & Cyber Security Enthusiast"
+
+// Metadata halaman
+export const metadata = {
+  title: 'Januar Galuh - Portfolio',
+  description: 'IT & Cyber Security Professional Portfolio',
+}
 
 // Halaman utama aplikasi
 export default function Home() {
@@ -25,7 +31,7 @@ export default function Home() {
       <ScrollIndicator />
       
       <Suspense fallback={<LoadingScreen />}>
-        <ClientHeroSection />
+        <ClientHeroSection mainHeadingText={MAIN_HEADING_TEXT} />
       </Suspense>
       
       <ServicesSection />

@@ -27,7 +27,12 @@ async function preloadPatches() {
 // Panggil preload
 preloadPatches();
 
-export default function ClientHeroSection() {
+// Interface props
+interface ClientHeroSectionProps {
+  mainHeadingText?: string;
+}
+
+export default function ClientHeroSection({ mainHeadingText = "IT & Cyber Security Enthusiast" }: ClientHeroSectionProps) {
   const [ready, setReady] = useState(false);
 
   async function initializePatches() {
@@ -73,7 +78,7 @@ export default function ClientHeroSection() {
 
   return (
     <section className="relative min-h-[750px] md:min-h-screen w-full pb-24">
-      <HeroSectionWrapper />
+      <HeroSectionWrapper mainHeadingText={mainHeadingText} />
     </section>
   );
 } 

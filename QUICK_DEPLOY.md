@@ -12,20 +12,44 @@ npm install --save-dev gh-pages
 npm run deploy:gh-pages
 ```
 
-## Netlify (CLI)
+## Netlify (Script Otomatis)
+
+Script otomatis yang kami sediakan akan menangani semua langkah dengan mudah:
 
 ```bash
-# Pastikan Netlify CLI terinstall
+# Di Windows/PowerShell
+./scripts/deploy.sh
+
+# Di Linux/macOS
+bash ./scripts/deploy.sh
+```
+
+## Netlify (Manual CLI)
+
+```bash
+# Bersihkan build sebelumnya
+npm run clean
+
+# Jalankan build untuk Netlify
+$env:DEPLOY_TARGET="netlify"  # Di PowerShell
+# ATAU
+export DEPLOY_TARGET=netlify  # Di Bash/Linux/macOS
+
+# Build dan persiapkan
+npm run build:netlify
+npm run prepare-netlify
+
+# Install Netlify CLI jika belum
 npm install -g netlify-cli
 
 # Login ke Netlify
 netlify login
 
-# Build website
-npm run build
+# Deploy ke Netlify (draft/preview)
+netlify deploy --dir=out
 
-# Deploy ke Netlify
-netlify deploy --prod
+# Deploy ke Netlify (production)
+netlify deploy --prod --dir=out
 ```
 
 ## Vercel
@@ -67,17 +91,20 @@ NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=template_yj3blyg
 NEXT_PUBLIC_EMAILJS_USER_ID=WrdMD5erXU1TjP0SR
 ```
 
-## Script Bantuan
+## Checklist Deployment Netlify
 
-Website portfolio ini menyediakan script bantuan untuk mempermudah deployment:
+✅ File yang diperlukan:
+- `next.config.mjs` - Berisi konfigurasi khusus Netlify
+- `netlify.toml` - Konfigurasi untuk headers, redirects, dll
+- `public/pdf.worker.min.js` - Worker untuk PDF Viewer
+- `scripts/prepare-netlify.js` - Script persiapan deployment
+- `scripts/deploy.sh` - Script otomatis deployment
 
-```bash
-# Windows
-initialize-github-repo.cmd
-
-# Linux/macOS
-bash initialize-github-repo.sh
-```
+✅ Pastikan hal berikut telah dikonfigurasi:
+- Output PDF.js sudah diatur dengan benar
+- SPA routing sudah diaktifkan dengan file `_redirects`
+- CORS untuk worker file sudah diatur di `netlify.toml`
+- Custom 404 page sudah tersedia
 
 ## Troubleshooting Cepat
 
@@ -89,12 +116,22 @@ npm run clean:full
 # Refresh font
 npm run refresh-fonts
 
-# Build ulang
-npm run prepare-deploy
+# Build ulang dengan env vars
+$env:DEPLOY_TARGET="netlify" && npm run build:netlify
 ```
+
+**Masalah PDF Viewer:**
+1. Pastikan `pdf.worker.min.js` ada di root folder setelah build
+2. Jalankan `npm run prepare-netlify` untuk menyalin file yang diperlukan
 
 **Masalah EmailJS:**
 1. Tambahkan domain Anda di [dashboard EmailJS](https://dashboard.emailjs.com/) > Integration > Website Integration
+
+## CI/CD dengan GitHub Actions
+
+Untuk menggunakan GitHub Actions, pastikan file `.github/workflows/deploy-netlify.yml` sudah ada dengan secret berikut:
+- `NETLIFY_AUTH_TOKEN`
+- `NETLIFY_SITE_ID`
 
 ## Panduan Lengkap
 

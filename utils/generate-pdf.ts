@@ -1,49 +1,203 @@
 import { toast } from "@/hooks/use-toast"
 
-export const generateResumePDF = async () => {
+/**
+ * Fungsi untuk mendownload CV dari Google Drive
+ * 
+ * Menangani proses download CV dari Google Drive dengan lebih robust
+ * - Menambahkan fallback jika link utama gagal
+ * - Menangani error dengan lebih baik
+ * - Menambahkan logging untuk debugging
+ */
+
+/**
+ * Mengubah link Google Drive menjadi direct download link
+ * @param driveLink Link Google Drive
+ * @returns Direct download link
+ */
+function convertGDriveToDirectLink(driveLink: string): string {
   try {
-    // Show loading toast
-    toast({
-      title: "Mendownload CV...",
-      description: "Mohon tunggu sebentar",
-    })
-
-    // Link Google Drive yang diberikan
-    const googleDriveLink = "https://drive.google.com/file/d/1VFgNKP44WNUGfgMMMLn-BYiemImh5bnQ/view?usp=sharing"
+    // Ekstrak ID file dari URL Google Drive
+    const regex = /[-\w]{25,}/;
+    const match = regex.exec(driveLink);
     
-    // Mengubah link Google Drive menjadi link download langsung
-    // Format: https://drive.google.com/uc?export=download&id=FILE_ID
-    const fileId = googleDriveLink.split("/")[5] // Mengambil ID file dari URL
-    const downloadLink = `https://drive.google.com/uc?export=download&id=${fileId}`
+    if (!match || !match[0]) {
+      console.error("❌ Format Google Drive URL tidak valid");
+      return driveLink; // Kembalikan link asli jika invalid
+    }
     
-    // Buat elemen <a> untuk melakukan download
-    const downloadElement = document.createElement("a")
-    downloadElement.href = downloadLink
-    downloadElement.download = "Januar_Galuh_CV.pdf" // Nama file yang akan diunduh
-    downloadElement.target = "_blank" // Buka di tab baru
-    
-    // Simulasikan klik untuk memulai download
-    document.body.appendChild(downloadElement)
-    downloadElement.click()
-    document.body.removeChild(downloadElement)
-    
-    // Tampilkan toast sukses setelah beberapa detik
-    setTimeout(() => {
-      toast({
-        title: "Berhasil!",
-        description: "CV Anda sedang diunduh",
-      })
-    }, 1500)
-
-    return true
+    const fileId = match[0];
+    return `https://drive.google.com/uc?export=download&id=${fileId}`;
   } catch (error) {
-    console.error("Error downloading CV:", error)
-    toast({
-      title: "Error",
-      description: "Gagal mengunduh CV. Silakan coba lagi nanti.",
-      variant: "destructive",
-    })
-    return false
+    console.error("❌ Error mengkonversi link Google Drive:", error);
+    return driveLink; // Kembalikan link asli jika terjadi error
+  }
+}
+
+/**
+ * Alternatif link download sebagai fallback
+ */
+const CV_LINKS = {
+  PRIMARY: "https://drive.google.com/file/d/1bCZvP45i2XRKTRQNwR9I3DGVrK_OJvbQ/view?usp=drive_link",
+  BACKUP: "https://drive.google.com/file/d/1bCZvP45i2XRKTRQNwR9I3DGVrK_OJvbQ/view?usp=sharing",
+  DIRECT: "https://docs.google.com/document/d/1bCZvP45i2XRKTRQNwR9I3DGVrK_OJvbQ/export?format=pdf",
+  // Path ke file PDF lokal (prioritas tertinggi)
+  LOCAL: "/pdfs/Januar_Galuh_CV.pdf", 
+  // Nama file untuk download
+  FILENAME: "Januar_Galuh_CV.pdf"
+};
+
+/**
+ * Fungsi untuk mengunduh dan membuat CV
+ */
+export async function generateResumePDF(): Promise<void> {
+  // Fungsi helper untuk mencoba download dari URL
+  const attemptDownload = (url: string, filename: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      try {
+        console.log(`📥 Mencoba download dari: ${url}`);
+        
+        // Tambahkan parameter timestamp untuk mencegah caching
+        const finalUrl = url.includes('?') 
+          ? `${url}&t=${Date.now()}` 
+          : `${url}?t=${Date.now()}`;
+        
+        // Buat elemen anchor untuk download
+        const link = document.createElement('a');
+        link.href = finalUrl;
+        link.download = filename;
+        link.target = "_blank"; // Untuk kompatibilitas browser
+        link.rel = "noopener noreferrer"; // Untuk keamanan
+        
+        // Tambahkan ke DOM, klik, lalu hapus
+        document.body.appendChild(link);
+        setTimeout(() => {
+          link.click();
+          
+          // Hapus setelah delay untuk memastikan download dimulai
+          setTimeout(() => {
+            document.body.removeChild(link);
+            
+            // Anggap berhasil jika tidak ada error
+            resolve(true);
+            
+            // Tampilkan toast sukses
+            try {
+              if (typeof toast === 'function') {
+                toast({
+                  title: "Download Berhasil",
+                  description: "CV Anda telah berhasil diunduh",
+                });
+              }
+            } catch (error) {
+              console.log("Toast notification tidak tersedia");
+            }
+          }, 100);
+        }, 50);
+      } catch (error) {
+        console.error(`❌ Error saat download dari ${url}:`, error);
+        resolve(false);
+      }
+    });
+  };
+  
+  try {
+    // Coba akses file PDF lokal terlebih dahulu (opsi terbaik)
+    console.log("🔍 Mencoba mengunduh CV dari file lokal...");
+    const localSuccess = await attemptDownload(CV_LINKS.LOCAL, CV_LINKS.FILENAME);
+    
+    if (!localSuccess) {
+      console.log("⚠️ Download dari file lokal gagal, mencoba Google Drive...");
+      
+      // Langkah 1: Coba download menggunakan link direct export Google Drive
+      console.log("🔄 Mencoba mengunduh dari Google Drive export link...");
+      const directSuccess = await attemptDownload(CV_LINKS.DIRECT, CV_LINKS.FILENAME);
+      
+      if (!directSuccess) {
+        console.log("⚠️ Download dari direct export gagal, mencoba link standard...");
+        
+        // Langkah 2: Coba download dari Google Drive URL utama 
+        const primaryDownloadLink = convertGDriveToDirectLink(CV_LINKS.PRIMARY);
+        console.log("🔄 Mencoba mengunduh dari Google Drive standard link...");
+        const primarySuccess = await attemptDownload(primaryDownloadLink, CV_LINKS.FILENAME);
+        
+        // Langkah 3: Jika gagal, coba download dari URL backup
+        if (!primarySuccess) {
+          console.log("⚠️ Download dari link utama gagal, mencoba backup link...");
+          const backupDownloadLink = convertGDriveToDirectLink(CV_LINKS.BACKUP);
+          console.log("🔄 Mencoba mengunduh dari Google Drive backup link...");
+          const backupSuccess = await attemptDownload(backupDownloadLink, CV_LINKS.FILENAME);
+          
+          // Langkah 4: Jika semua URL gagal, buka URL Google Drive di tab baru
+          if (!backupSuccess) {
+            console.log("⚠️ Semua metode download gagal, membuka browser tab...");
+            console.log("📂 Membuka Google Drive di tab baru...");
+            window.open(CV_LINKS.PRIMARY, '_blank', 'noopener,noreferrer');
+            
+            // Tampilkan toast sukses meskipun hanya membuka di tab
+            try {
+              if (typeof toast === 'function') {
+                toast({
+                  title: "CV Berhasil Dibuka",
+                  description: "CV Anda telah dibuka di tab baru",
+                });
+              }
+            } catch (error) {
+              console.log("Toast notification tidak tersedia");
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error saat generate/download PDF:", error);
+    
+    // Mencoba beberapa fallback
+    try {
+      console.log("🔄 Mencoba metode fallback...");
+      
+      // Fallback 1: Coba gunakan fetch API
+      try {
+        console.log("🔄 Mencoba fetch API...");
+        fetch(CV_LINKS.LOCAL)
+          .then(response => response.blob())
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = CV_LINKS.FILENAME;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          })
+          .catch(e => {
+            console.error("❌ Fetch API gagal:", e);
+            throw e;
+          });
+      } catch (fetchError) {
+        console.error("❌ Fallback dengan fetch gagal:", fetchError);
+        
+        // Fallback terakhir: Buka Google Drive di tab baru
+        console.log("📂 Membuka Google Drive di tab baru sebagai fallback terakhir...");
+        window.open(CV_LINKS.PRIMARY, '_blank', 'noopener,noreferrer');
+      }
+    } catch (finalError) {
+      console.error("❌ Semua metode download gagal:", finalError);
+      
+      // Tampilkan toast error
+      try {
+        if (typeof toast === 'function') {
+          toast({
+            title: "Download Gagal",
+            description: "Terjadi kesalahan saat mengunduh CV. Silakan coba lagi nanti.",
+            variant: "destructive",
+          });
+        }
+      } catch (toastError) {
+        console.log("Toast notification tidak tersedia");
+        alert("Terjadi kesalahan saat mengunduh CV. Silakan coba lagi nanti.");
+      }
+    }
   }
 }
 

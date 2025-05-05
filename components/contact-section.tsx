@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useLanguage } from "./language-provider"
 import { toast } from "@/hooks/use-toast"
-import { sendEmail } from "@/utils/email-service"
 import EmailInitializer from "./email-initializer"
 
 // Define form schema dengan validasi
@@ -34,7 +33,7 @@ export default function ContactSection() {
     phone: "+6281290040769",
     whatsapp: "6281290040769",
   }
-
+  
   // Setup form dengan react-hook-form dan zod
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,95 +44,6 @@ export default function ContactSection() {
       message: "",
     },
   })
-
-  // Fungsi untuk mengirim email langsung melalui EmailJS
-  const handleDirectEmail = async (data: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true)
-    
-    try {
-      console.log('===== FORM SUBMISSION STARTED =====');
-      console.log('Environment check:');
-      console.log('- Service ID:', process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || 'Missing');
-      console.log('- Template ID:', process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || 'Missing');
-      console.log('- User ID:', process.env.NEXT_PUBLIC_EMAILJS_USER_ID ? 'Available' : 'Missing');
-      
-      console.log('Attempting to send email with data:', {
-        ...data,
-        message: 'message content...' // Sensor isi pesan
-      });
-      
-      // Pastikan EmailJS sudah diinisialisasi
-      try {
-        const emailjsModuleLoaded = !!window.emailjs;
-        console.log('EmailJS module loaded:', emailjsModuleLoaded);
-      } catch (e) {
-        console.error('Error checking EmailJS initialization:', e);
-      }
-      
-      // Kirim email menggunakan EmailJS
-      const result = await sendEmail(data)
-      
-      console.log('Email sending result:', result);
-      
-      if (result.success) {
-        form.reset()
-        toast({
-          title: t("contact.form.success") || "Email Berhasil Terkirim",
-          description: `Pesan telah dikirim ke ${contactInfo.email}. Terima kasih!`,
-          variant: "default",
-        })
-      } else {
-        console.error('Email sending failed with error message:', result.message);
-        
-        toast({
-          title: t("contact.form.error") || "Gagal Mengirim Email",
-          description: result.message || "Terjadi kesalahan saat mengirim email. Silakan coba lagi nanti.",
-          variant: "destructive",
-        })
-        
-        // Fallback: Beri tahu pengguna untuk mencoba metode lain
-        toast({
-          title: "Saran",
-          description: "Silakan coba mengirim melalui WhatsApp atau Email Client sebagai alternatif.",
-          variant: "default",
-        })
-      }
-    } catch (error) {
-      // Log error dengan lebih detail
-      console.error("===== EMAIL SUBMISSION ERROR =====");
-      console.error("Error sending email:", error);
-      
-      let errorMessage = "Terjadi kesalahan saat mengirim email";
-      
-      if (error instanceof Error) {
-        errorMessage = `Error: ${error.message}`;
-        console.error('Error name:', error.name);
-        console.error('Error stack:', error.stack);
-      } else if (error && typeof error === 'object') {
-        try {
-          errorMessage = `Error: ${JSON.stringify(error)}`;
-        } catch (e) {
-          errorMessage = 'Error tidak dapat diproses';
-        }
-      }
-      
-      toast({
-        title: t("contact.form.error") || "Gagal Mengirim Email",
-        description: errorMessage,
-        variant: "destructive",
-      })
-      
-      // Fallback: Beri tahu pengguna untuk mencoba metode lain
-      toast({
-        title: "Saran",
-        description: "Silakan coba mengirim melalui WhatsApp atau Email Client sebagai alternatif.",
-        variant: "default",
-      })
-    } finally {
-      setIsSubmitting(false)
-      console.log('===== FORM SUBMISSION ENDED =====');
-    }
-  }
 
   // Fungsi untuk mengirim email melalui mailto
   const handleMailtoEmail = (data: z.infer<typeof formSchema>) => {
@@ -239,7 +149,7 @@ export default function ContactSection() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form className="space-y-6" onSubmit={form.handleSubmit(handleDirectEmail)}>
+                <form className="space-y-6" onSubmit={form.handleSubmit(handleMailtoEmail)}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -340,24 +250,6 @@ export default function ContactSection() {
                   )}
                 </Button>
               </div>
-              <Button 
-                type="submit"
-                className="w-full sm:w-auto gap-2"
-                onClick={form.handleSubmit(handleDirectEmail)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {t("contact.form.sending") || "Mengirim..."}
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    {t("contact.form.emailBtn") || "Kirim Langsung"}
-                  </>
-                )}
-              </Button>
             </CardFooter>
           </Card>
         </motion.div>

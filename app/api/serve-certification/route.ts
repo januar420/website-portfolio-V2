@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { stat } from 'fs/promises';
 
+export const dynamic = "force-static";
+
 export async function GET(request: NextRequest) {
   try {
     // Dapatkan parameter path dari URL
@@ -80,4 +82,15 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Handle preflight requests untuk CORS
+export async function OPTIONS() {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+  
+  return new NextResponse(null, { status: 204, headers });
 } 

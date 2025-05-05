@@ -190,7 +190,16 @@ const baseTranslations: TranslationsType = {
     "growth.lastUpdated": "Last updated: March 2025",
     "growth.successRate": "Success Rate",
     "growth.rateValue": "90%",
-    "growth.quickNotes": "Professional Focus Areas"
+    "growth.quickNotes": "Professional Focus Areas",
+    "resume.readyToCollaborate": "Ready to Collaborate?",
+    "resume.collaborationText": "I'm always open to discussing new projects, opportunities, and collaborations.",
+    "resume.contactMe": "Contact Me",
+    "resume.downloadCV": "Download CV",
+    "resume.downloading": "Downloading...",
+    "resume.downloadSuccess": "Success!",
+    "resume.downloadSuccessDesc": "Your CV has been downloaded successfully",
+    "resume.downloadError": "Error",
+    "resume.downloadErrorDesc": "Failed to download CV. Please try again later."
   },
   id: {
     "hero.title": "Praktisi IT & Keamanan Siber",
@@ -345,7 +354,16 @@ const baseTranslations: TranslationsType = {
     "growth.lastUpdated": "Terakhir diperbarui: Maret 2025",
     "growth.successRate": "Tingkat Keberhasilan",
     "growth.rateValue": "90%",
-    "growth.quickNotes": "Fokus Pengembangan Profesional"
+    "growth.quickNotes": "Area Fokus Profesional",
+    "resume.readyToCollaborate": "Siap Berkolaborasi?",
+    "resume.collaborationText": "Saya selalu terbuka untuk membahas proyek baru, peluang, dan kolaborasi.",
+    "resume.contactMe": "Hubungi Saya",
+    "resume.downloadCV": "Unduh CV",
+    "resume.downloading": "Mengunduh...",
+    "resume.downloadSuccess": "Berhasil!",
+    "resume.downloadSuccessDesc": "CV Anda telah berhasil diunduh",
+    "resume.downloadError": "Error",
+    "resume.downloadErrorDesc": "Gagal mengunduh CV. Silakan coba lagi nanti."
   },
   // Contoh terjemahan bahasa Spanyol (sebagian)
   es: {
@@ -394,7 +412,16 @@ const baseTranslations: TranslationsType = {
     "achievements.subtitle": "Resultados medibles e hitos de mi trayectoria profesional",
     "growth.title": "Crecimiento Profesional Continuo",
     "growth.description": "Mi compromiso con la excelencia se refleja en un historial consistente de logros y crecimiento. A través del aprendizaje autodidacta dedicado, la aplicación práctica y la pasión por la tecnología, he desarrollado un conjunto integral de habilidades que me permite ofrecer resultados excepcionales.",
-    "growth.quickNotes": "Áreas de Enfoque Profesional"
+    "growth.quickNotes": "Áreas de Enfoque Profesional",
+    "resume.readyToCollaborate": "¿Listo para Colaborar?",
+    "resume.collaborationText": "Siempre estoy abierto a discutir nuevos proyectos, oportunidades y colaboraciones.",
+    "resume.contactMe": "Contáctame",
+    "resume.downloadCV": "Descargar CV",
+    "resume.downloading": "Descargando...",
+    "resume.downloadSuccess": "¡Éxito!",
+    "resume.downloadSuccessDesc": "Tu CV se ha descargado correctamente",
+    "resume.downloadError": "Error",
+    "resume.downloadErrorDesc": "Error al descargar el CV. Por favor, inténtalo más tarde."
   },
   fr: {
     "hero.title": "Entusiast de l'IT & la Sécurité Informatique",
@@ -442,9 +469,72 @@ const baseTranslations: TranslationsType = {
     "achievements.subtitle": "Résultats mesurables et jalons de mon parcours professionnel",
     "growth.title": "Croissance Professionnelle Continue",
     "growth.description": "Mon engagement envers l'excellence se reflète dans un bilan constant de réussite et de croissance. Grâce à l'apprentissage autonome dévoué, à l'application pratique et à la passion pour la technologie, j'ai développé un ensemble complet de compétences qui me permettent de fournir des résultats exceptionnels.",
-    "growth.quickNotes": "Domaines d'Intérêt Professionnels"
+    "growth.quickNotes": "Domaines d'Intérêt Professionnels",
+    "resume.readyToCollaborate": "Prêt à Collaborer?",
+    "resume.collaborationText": "Je suis toujours ouvert à discuter de nouveaux projets, opportunités et collaborations.",
+    "resume.contactMe": "Contactez-moi",
+    "resume.downloadCV": "Télécharger CV",
+    "resume.downloading": "Téléchargement...",
+    "resume.downloadSuccess": "Succès!",
+    "resume.downloadSuccessDesc": "Votre CV a été téléchargé avec succès",
+    "resume.downloadError": "Erreur",
+    "resume.downloadErrorDesc": "Échec du téléchargement du CV. Veuillez réessayer plus tard."
+  },
+  de: {
+    "resume.readyToCollaborate": "Bereit zur Zusammenarbeit?",
+    "resume.collaborationText": "Ich bin immer offen für die Diskussion neuer Projekte, Möglichkeiten und Zusammenarbeiten.",
+    "resume.contactMe": "Kontaktieren Sie mich",
+    "resume.downloadCV": "Lebenslauf herunterladen",
+    "resume.downloading": "Wird heruntergeladen...",
+    "resume.downloadSuccess": "Erfolg!",
+    "resume.downloadSuccessDesc": "Ihr Lebenslauf wurde erfolgreich heruntergeladen",
+    "resume.downloadError": "Fehler",
+    "resume.downloadErrorDesc": "Lebenslauf konnte nicht heruntergeladen werden. Bitte versuchen Sie es später erneut."
+  },
+  zh: {
+    "resume.readyToCollaborate": "准备合作？",
+    "resume.collaborationText": "我始终愿意讨论新项目、机会和合作。",
+    "resume.contactMe": "联系我",
+    "resume.downloadCV": "下载简历",
+    "resume.downloading": "下载中...",
+    "resume.downloadSuccess": "成功！",
+    "resume.downloadSuccessDesc": "您的简历已成功下载",
+    "resume.downloadError": "错误",
+    "resume.downloadErrorDesc": "下载简历失败。请稍后再试。"
+  },
+  ja: {
+    "resume.readyToCollaborate": "協力する準備はできていますか？",
+    "resume.collaborationText": "新しいプロジェクト、機会、コラボレーションについて話し合うことはいつでも歓迎します。",
+    "resume.contactMe": "お問い合わせ",
+    "resume.downloadCV": "履歴書をダウンロード",
+    "resume.downloading": "ダウンロード中...",
+    "resume.downloadSuccess": "成功！",
+    "resume.downloadSuccessDesc": "履歴書が正常にダウンロードされました",
+    "resume.downloadError": "エラー",
+    "resume.downloadErrorDesc": "履歴書のダウンロードに失敗しました。後でもう一度お試しください。"
+  },
+  ko: {
+    "resume.readyToCollaborate": "협업할 준비가 되셨나요?",
+    "resume.collaborationText": "저는 항상 새로운 프로젝트, 기회 및 협업에 대해 논의하는 것을 환영합니다.",
+    "resume.contactMe": "문의하기",
+    "resume.downloadCV": "이력서 다운로드",
+    "resume.downloading": "다운로드 중...",
+    "resume.downloadSuccess": "성공!",
+    "resume.downloadSuccessDesc": "이력서가 성공적으로 다운로드되었습니다",
+    "resume.downloadError": "오류",
+    "resume.downloadErrorDesc": "이력서 다운로드에 실패했습니다. 나중에 다시 시도해 주세요."
+  },
+  ar: {
+    "resume.readyToCollaborate": "هل أنت مستعد للتعاون؟",
+    "resume.collaborationText": "أنا دائما منفتح لمناقشة المشاريع الجديدة والفرص والتعاون.",
+    "resume.contactMe": "اتصل بي",
+    "resume.downloadCV": "تحميل السيرة الذاتية",
+    "resume.downloading": "جاري التحميل...",
+    "resume.downloadSuccess": "نجاح!",
+    "resume.downloadSuccessDesc": "تم تنزيل سيرتك الذاتية بنجاح",
+    "resume.downloadError": "خطأ",
+    "resume.downloadErrorDesc": "فشل تنزيل السيرة الذاتية. يرجى المحاولة مرة أخرى لاحقًا."
   }
-  // Dapat ditambahkan bahasa lain di sini
 }
 
 // Gabungkan terjemahan dari berbagai sumber

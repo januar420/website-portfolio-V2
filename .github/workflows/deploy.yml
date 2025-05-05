@@ -5,37 +5,70 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Secrets yang digunakan:
+# - EMAILJS_SERVICE_ID: ID layanan EmailJS yang digunakan untuk fitur kontak
+# - EMAILJS_TEMPLATE_ID: ID template EmailJS yang digunakan untuk format email
+# - EMAILJS_USER_ID: ID pengguna EmailJS untuk autentikasi
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: Setup Node.js ⚙️
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
           
       - name: Install dependencies 📦
         run: npm ci
+      
+      - name: Verify environment secrets ✓
+        # Periksa ketersediaan secret tanpa mengekspos nilainya
+        run: |
+          echo "Checking if required secrets are set (without exposing values):"
+          [[ -n "$EMAILJS_SERVICE_ID_CHECK" ]] && echo "✓ EMAILJS_SERVICE_ID is set" || echo "✗ EMAILJS_SERVICE_ID is NOT set"
+          [[ -n "$EMAILJS_TEMPLATE_ID_CHECK" ]] && echo "✓ EMAILJS_TEMPLATE_ID is set" || echo "✗ EMAILJS_TEMPLATE_ID is NOT set"
+          [[ -n "$EMAILJS_USER_ID_CHECK" ]] && echo "✓ EMAILJS_USER_ID is set" || echo "✗ EMAILJS_USER_ID is NOT set"
+        env:
+          # Gunakan teknik ini untuk memeriksa keberadaan secret tanpa mengekspos nilainya
+          EMAILJS_SERVICE_ID_CHECK: ${{ secrets.EMAILJS_SERVICE_ID }}
+          EMAILJS_TEMPLATE_ID_CHECK: ${{ secrets.EMAILJS_TEMPLATE_ID }}
+          EMAILJS_USER_ID_CHECK: ${{ secrets.EMAILJS_USER_ID }}
         
       - name: Build 🏗️
-        run: npm run export:gh-pages
+        run: |
+          echo "Starting export for GitHub Pages deployment"
+          npm run export:gh-pages
         env:
-          NEXT_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EMAILJS_SERVICE_ID }}
-          NEXT_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID }}
-          NEXT_PUBLIC_EMAILJS_USER_ID: ${{ secrets.EMAILJS_USER_ID }}
+          # Secrets akan tersedia saat runtime di GitHub Actions
+          NEXT_PUBLIC_EMAILJS_SERVICE_ID: '${{ secrets.EMAILJS_SERVICE_ID }}'
+          NEXT_PUBLIC_EMAILJS_TEMPLATE_ID: '${{ secrets.EMAILJS_TEMPLATE_ID }}'
+          NEXT_PUBLIC_EMAILJS_USER_ID: '${{ secrets.EMAILJS_USER_ID }}'
+          NODE_ENV: production
+      
+      - name: Check build output 📋
+        run: |
+          echo "Verifying build output directory"
+          ls -la out/
+          echo "Total files in build output: $(find out/ -type f | wc -l)"
           
       - name: Prepare for GitHub Pages 🔧
         run: |
+          echo "Creating .nojekyll file to bypass Jekyll processing"
           touch out/.nojekyll
+          
+          echo "Running prepare-gh-pages.js script"
           node scripts/prepare-gh-pages.js
           
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: out
-          branch: gh-pages 
+          branch: gh-pages
+          commit-message: "Deploy to GitHub Pages - ${{ github.event.head_commit.message || 'Manual workflow dispatch' }}"
+          clean: true # Ensures the deployment is clean 

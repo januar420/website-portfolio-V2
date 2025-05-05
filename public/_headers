@@ -4,6 +4,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   X-XSS-Protection: 1; mode=block
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net cdnjs.cloudflare.com unpkg.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; img-src 'self' data: blob: *.githubusercontent.com; font-src 'self' fonts.gstatic.com; connect-src 'self' vitals.vercel-insights.com; worker-src 'self' blob:; frame-src 'self' *.netlify.app;
   
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
@@ -17,7 +18,24 @@
 /images/*
   Cache-Control: public, max-age=31536000, immutable
   
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+  
 /api/*
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, POST, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization 
+
+# Allow PDF.js worker
+/pdf.worker.min.js
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET
+  Cache-Control: public, max-age=31536000
+
+# Preload critical assets
+/
+  Link: </fonts/Inter.var.woff2>; rel=preload; as=font; type=font/woff2; crossorigin
+
+# Handle redirects for SPA
+/*
+  Link: </pdf.worker.min.js>; rel=preload; as=script 

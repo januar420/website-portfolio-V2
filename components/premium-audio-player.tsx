@@ -402,19 +402,25 @@ export default function PremiumAudioPlayer() {
               transition-all duration-300
               ${isInitializing ? 'animate-pulse' : ''}
               shadow-lg hover:shadow-primary/20
+              pointer-events-auto
             `}
-            onClick={togglePlay}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("Ambient sound button clicked");
+              togglePlay();
+            }}
             aria-label={isPlaying ? "Pause ambient sound" : "Play ambient sound"}
           >
             {isInitializing ? (
-              <span className="h-4 w-4 block rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <span className="h-4 w-4 block rounded-full border-2 border-primary border-t-transparent animate-spin pointer-events-none" />
             ) : isPlaying ? (
-              <Pause className="h-4 w-4 text-primary" />
+              <Pause className="h-4 w-4 text-primary pointer-events-none" />
             ) : (
-              <div className="relative">
-                <Music className="h-4 w-4" />
+              <div className="relative pointer-events-none">
+                <Music className="h-4 w-4 pointer-events-none" />
                 <motion.div 
-                  className="absolute inset-0 bg-primary/20 rounded-full"
+                  className="absolute inset-0 bg-primary/20 rounded-full pointer-events-none"
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: [0, 1.5, 0], opacity: [0, 0.5, 0] }}
                   transition={{ repeat: Infinity, duration: 3, repeatDelay: 1 }}
@@ -441,15 +447,19 @@ export default function PremiumAudioPlayer() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-6 w-6 rounded-full hover:bg-primary/10"
-                  onClick={toggleMute}
+                  className="h-6 w-6 rounded-full hover:bg-primary/10 pointer-events-auto"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleMute();
+                  }}
                   disabled={!isAudioAvailable || isInitializing}
                   aria-label={isMuted ? "Unmute" : "Mute"}
                 >
                   {isMuted ? (
-                    <VolumeX className="h-3 w-3 text-muted-foreground" />
+                    <VolumeX className="h-3 w-3 text-muted-foreground pointer-events-none" />
                   ) : (
-                    <Volume2 className="h-3 w-3 text-primary" />
+                    <Volume2 className="h-3 w-3 text-primary pointer-events-none" />
                   )}
                 </Button>
               </div>
@@ -461,12 +471,12 @@ export default function PremiumAudioPlayer() {
                 step={0.01}
                 onValueChange={handleVolumeChange}
                 disabled={!isAudioAvailable || isInitializing}
-                className="w-full"
+                className="w-full pointer-events-auto"
                 aria-label="Volume"
               />
 
               <motion.div 
-                className="mt-2 text-xs text-center rounded-md py-1 px-2"
+                className="mt-2 text-xs text-center rounded-md py-1 px-2 pointer-events-none"
                 initial={{ backgroundColor: "rgba(var(--primary-rgb), 0.1)" }}
                 animate={{ 
                   backgroundColor: isPlaying 

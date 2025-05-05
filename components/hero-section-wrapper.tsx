@@ -14,75 +14,28 @@ import { applyAllR3FPatches, setupPerformanceErrorRecovery } from '@/app/utils/r
 // Jumlah maksimum percobaan recovery
 const MAX_RECOVERY_ATTEMPTS = 3;
 
-// Impor HeroSection dengan pendekatan fail-safe
-const HeroSection = dynamic(() => {
-  // Deteksi apakah React Three Monkey Patch sudah diterapkan
-  if (typeof window !== 'undefined') {
-    // Apply all patches for React Three Fiber
-    applyAllR3FPatches();
-  }
+// Interface untuk props komponen
+interface HeroSectionProps {
+  mainHeadingText?: string;
+}
 
-  // Sekarang aman untuk melakukan import
-  return new Promise<ComponentType<{}>>(async (resolve) => {
-    // Coba import dengan timeout dan recovery logic
-    let importAttempts = 0;
-    
-    const attemptImport = () => {
-      importAttempts++;
-      console.info(`[HERO-WRAPPER] Attempting to import HeroSection (attempt ${importAttempts})...`);
-      
-      // Apply patches sebelum setiap percobaan
-      applyAllR3FPatches();
-      
-      import('./hero-section')
-        .then(mod => {
-          console.info("[HERO-WRAPPER] HeroSection berhasil dimuat");
-          resolve(mod.default || mod);
-        })
-        .catch(err => {
-          console.error("[HERO-WRAPPER] Error importing HeroSection:", err);
-          
-          if (importAttempts < MAX_RECOVERY_ATTEMPTS) {
-            console.info(`[HERO-WRAPPER] Retrying import in 500ms (attempt ${importAttempts+1}/${MAX_RECOVERY_ATTEMPTS})...`);
-            
-            // Coba patch ulang
-            if (typeof window !== 'undefined') {
-              // Apply semua patches lagi
-              applyAllR3FPatches();
-            }
-            
-            // Tunggu sejenak lalu coba lagi
-            setTimeout(attemptImport, 500);
-          } else {
-            console.warn("[HERO-WRAPPER] Max retry attempts reached, falling back...");
-            toast({
-              title: "Error Loading 3D Component",
-              description: "Terjadi masalah saat memuat komponen 3D, menggunakan tampilan alternatif",
-              variant: "destructive",
-            });
-            
-            // Return fallback component when loading fails
-            resolve((() => <HeroSectionFallback />) as ComponentType<{}>);
-          }
-        });
-    };
-    
-    // Mulai proses import
-    attemptImport();
-  });
-}, {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="text-sm text-foreground/70">Memuat tampilan 3D...</p>
+// Impor HeroSection dengan dynamic import sederhana
+const HeroSection = dynamic(
+  () => import('./hero-section').then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          <p className="text-sm text-foreground/70">Memuat tampilan 3D...</p>
+        </div>
       </div>
-    </div>
-  )
-})
+    )
+  }
+);
 
-export default function HeroSectionWrapper() {
+export default function HeroSectionWrapper({ mainHeadingText = "IT & Cyber Security Enthusiast" }: HeroSectionProps) {
   const [hasMounted, setHasMounted] = useState(false);
   const [hasError, setHasError] = useState(false);
   const recoveryAttemptsRef = useRef(0);
@@ -165,19 +118,19 @@ export default function HeroSectionWrapper() {
 
   // Fallbacks
   if (!hasMounted) {
-    return <HeroSectionFallback />;
+    return <HeroSectionFallback mainHeadingText={mainHeadingText} />;
   }
 
   if (hasError) {
-    return <HeroSectionFallback />;
+    return <HeroSectionFallback mainHeadingText={mainHeadingText} />;
   }
 
   // Render dengan error handling tambahan
   try {
     // Pastikan kita selalu mengembalikan komponen React yang valid
-    return <HeroSection />;
+    return <HeroSection mainHeadingText={mainHeadingText} />;
   } catch (error) {
     console.error("[HERO-WRAPPER] Error rendering HeroSection, showing fallback:", error);
-    return <HeroSectionFallback />;
+    return <HeroSectionFallback mainHeadingText={mainHeadingText} />;
   }
 } 

@@ -214,6 +214,17 @@ export type TranslationKeys =
   | "growth.successRate"
   | "growth.rateValue"
   | "growth.quickNotes"
+  // Resume collaboration section
+  | "resume.readyToCollaborate"
+  | "resume.collaborationText"
+  | "resume.contactMe"
+  // Download CV
+  | "resume.downloadCV"
+  | "resume.downloading"
+  | "resume.downloadSuccess"
+  | "resume.downloadSuccessDesc"
+  | "resume.downloadError"
+  | "resume.downloadErrorDesc"
 
 export type TranslationData = {
   [language: string]: { [key in TranslationKeys]?: string };

@@ -1,35 +1,117 @@
+# Konfigurasi Build Netlify
 [build]
-  command = "npm run build"
-  publish = ".next"
+  publish = "out"
+  command = "npm run build:netlify && npm run prepare-netlify"
 
 [build.environment]
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
-  NODE_VERSION = "20.12.0"
-  NPM_VERSION = "10.5.0"
-  # Paksa penggunaan npm (bukan pnpm)
-  NPM_FLAGS = "--legacy-peer-deps"
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+  NETLIFY_USE_YARN = "false"
+  # Untuk debugging
+  NEXT_TELEMETRY_DISABLED = "1"
 
-[dev]
-  command = "npm run dev"
-  port = 3000
-  targetPort = 3000
-
+# Plugin untuk Next.js
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Redirects untuk Next.js routing
-[[redirects]]
-  from = "/_next/*"
-  to = "/_next/:splat"
-  status = 200
+# ===== HEADERS =====
 
-[[redirects]]
-  from = "/api/*"
-  to = "/api/:splat"
-  status = 200
+# Headers keamanan utama untuk semua halaman
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' unpkg.com cdnjs.cloudflare.com jsdelivr.net; style-src 'self' 'unsafe-inline' fonts.googleapis.com; img-src 'self' data: blob: *.githubusercontent.com; font-src 'self' fonts.gstatic.com data:; connect-src 'self' api.emailjs.com unpkg.com cdnjs.cloudflare.com jsdelivr.net; worker-src 'self' blob:; frame-src 'self' *.netlify.app;"
+    # Penting untuk interaktivitas komponen
+    Feature-Policy = "autoplay 'self'; camera 'none'; microphone 'none'; payment 'none'"
+    # Memastikan komponen interaktif dapat berfungsi
+    Interaction-Policy = "allow-gestures-and-clicks 'self'; allow-modals 'self'"
 
-# Fallback untuk SPA routing
+# Konfigurasi caching untuk file statis
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Konfigurasi untuk PDF Worker - Yang diperbarui
+[[headers]]
+  for = "/pdf.worker.min.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Origin, Accept"
+    Cache-Control = "public, max-age=31536000, immutable"
+    Content-Type = "application/javascript"
+
+# Konfigurasi untuk font PDF dan cmaps
+[[headers]]
+  for = "/cmaps/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/standard_fonts/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ===== REDIRECTS =====
+
+# Pengalihan utama untuk SPA routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200 
+  status = 200
+  
+# Lindungi rute API (jika ada)
+[[redirects]]
+  from = "/api/*"
+  to = "/404.html"
+  status = 404
+
+# Fallback untuk 404
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+  force = false
+  conditions = {Response = {status = [404]}}
+
+# ===== OPTIMASI BUILD =====
+
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  pretty_urls = true
+
+[build.processing.images]
+  compress = true 

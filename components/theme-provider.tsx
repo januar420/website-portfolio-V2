@@ -1,7 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { ThemeProvider as NextThemesProvider, type ThemeProviderProps, useTheme } from "next-themes"
+import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
+import type { ComponentProps } from "react"
+
+// Definisikan tipe props
+type ThemeProviderProps = ComponentProps<typeof NextThemesProvider>;
 
 // Create a separate component for theme class application to avoid state update loops
 function ThemeClassApplier() {

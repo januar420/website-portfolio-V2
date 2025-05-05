@@ -31,7 +31,11 @@ import { useHardwareCapabilities } from "./hardware-optimized-renderer"
 import * as THREE from "three"
 import { useInView } from "react-intersection-observer"
 import dynamic from "next/dynamic"
-import { mainHeadingText } from "@/app/page"
+
+// Interface untuk props
+interface HeroSectionProps {
+  mainHeadingText?: string;
+}
 
 // Loading indicator komponn dalam Canvas menggunakan Html dari drei
 function CanvasLoadingIndicator() {
@@ -127,7 +131,7 @@ function HardwareOptimizer() {
     scene.traverse((object) => {
       if (object instanceof THREE.Mesh) {
         // Modifikasi materials
-        const material = object.material as THREE.Material
+        const material = object.material as any;
         if (material) {
           // Disable fitur yang bisa menyebabkan masalah pada perangkat terbatas
           if ("flatShading" in material) {
@@ -348,7 +352,7 @@ function FallbackEnvironment() {
 }
 
 // Komponen utama HeroSection
-export default function HeroSection() {
+export default function HeroSection({ mainHeadingText }: HeroSectionProps) {
   const { t } = useLanguage()
   const containerRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLHeadingElement>(null)
