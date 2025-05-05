@@ -9,6 +9,8 @@
   NETLIFY_USE_YARN = "false"
   # Untuk debugging
   NEXT_TELEMETRY_DISABLED = "1"
+  # Untuk mengatasi masalah platform
+  NPM_FLAGS = "--no-optional --ignore-scripts"
 
 # Plugin untuk Next.js
 [[plugins]]

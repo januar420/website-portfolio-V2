@@ -110,7 +110,7 @@
     "cross-env": "^7.0.3",
     "file-loader": "^6.2.0",
     "gh-pages": "^6.3.0",
-    "netlify-cli": "^19.0.3",
+    "netlify-cli": "^20.1.1",
     "pnpm": "^10.6.5",
     "postcss": "^8.5.3",
     "typescript": "^5.8.2",
@@ -130,5 +130,22 @@
   "directories": {
     "lib": "lib"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "resolutions": {
+    "@rollup/rollup-android-arm-eabi": "4.x.x",
+    "@rollup/rollup-android-arm64": "4.x.x",
+    "@rollup/rollup-darwin-arm64": "4.x.x",
+    "@rollup/rollup-darwin-x64": "4.x.x",
+    "@rollup/rollup-linux-arm-gnueabihf": "4.x.x",
+    "@rollup/rollup-linux-arm64-gnu": "4.x.x",
+    "@rollup/rollup-linux-arm64-musl": "4.x.x",
+    "@rollup/rollup-linux-x64-gnu": "4.x.x",
+    "@rollup/rollup-linux-x64-musl": "4.x.x",
+    "@rollup/rollup-win32-arm64-msvc": "4.x.x",
+    "@rollup/rollup-win32-ia32-msvc": "4.x.x",
+    "@rollup/rollup-win32-x64-msvc": "4.x.x"
+  }
 }
