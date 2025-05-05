@@ -298,3 +298,43 @@ Untuk deployment otomatis menggunakan GitHub Actions:
 2. **Masalah CORS dengan EmailJS**: Pastikan domain Cloudflare Pages Anda (`https://your-site.pages.dev`) sudah ditambahkan ke daftar domain yang diizinkan di dashboard EmailJS
 
 3. **Function timeouts**: Jika menggunakan API routes, pastikan kompatibilitas function sudah diaktifkan 
+
+## 🚀 Deployment dengan GitHub Actions
+
+Repositori ini sudah disetup dengan GitHub Actions untuk otomatis mendeploy ke Netlify.
+
+### Setup GitHub Secrets
+
+Anda perlu menambahkan secrets berikut pada repositori GitHub Anda:
+
+1. `NETLIFY_AUTH_TOKEN`: Token autentikasi dari Netlify
+   - Kunjungi [User Settings > Applications](https://app.netlify.com/user/applications)
+   - Buat token baru personal access
+   - Salin token tersebut
+
+2. `NETLIFY_SITE_ID`: ID dari site Netlify Anda
+   - Site ID: `f74da9ff-eb8c-4f27-8c24-03bf8191755e`
+
+Untuk menambahkan secrets:
+1. Buka repositori GitHub Anda
+2. Klik pada "Settings"
+3. Di sidebar, klik "Secrets and variables" > "Actions"
+4. Klik "New repository secret"
+5. Tambahkan kedua secrets tersebut
+
+### Opsi Deployment Manual
+
+Jika Anda lebih suka men-deploy secara manual:
+
+```bash
+# Build project
+npm run build:netlify
+
+# Siapkan file untuk Netlify
+npm run prepare-netlify
+
+# Deploy ke Netlify
+npx netlify deploy --prod --dir=out
+```
+
+Atau, Anda juga bisa men-deploy langsung dari dashboard Netlify dengan cara drag-and-drop folder `out`. 
