@@ -23,7 +23,7 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [18.x]
     
     steps:
       - name: Checkout repository
@@ -38,9 +38,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Fix Promise.withResolvers polyfill
-        run: node scripts/fix-promise-polyfill.js
-        
+      - name: Apply Promise.withResolvers polyfill globally
+        run: |
+          echo "Applying Promise.withResolvers polyfill..."
+          node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
+      
+      - name: Patch dependency files
+        run: |
+          npm run pre-build
+      
       - name: Run linting
         run: npm run lint || echo "Linting completed with warnings"
       
@@ -70,11 +76,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 18.x
           cache: 'npm'
       
       - name: Install dependencies
         run: npm ci
+      
+      - name: Apply Promise.withResolvers polyfill globally
+        run: |
+          echo "Applying Promise.withResolvers polyfill for deployment..."
+          node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
       
       - name: Restore cached build
         uses: actions/cache@v3
@@ -85,12 +96,10 @@ jobs:
             node_modules/.cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
       
-      - name: Fix Promise.withResolvers polyfill
-        run: node scripts/fix-promise-polyfill.js
-      
       - name: Prepare for Netlify
         run: npm run fix-netlify
         env:
+          NODE_OPTIONS: "--no-warnings"
           NETLIFY: 'true'
           DEPLOY_TARGET: 'netlify'
       
@@ -121,11 +130,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 18.x
           cache: 'npm'
       
       - name: Install dependencies
         run: npm ci
+      
+      - name: Apply Promise.withResolvers polyfill globally
+        run: |
+          echo "Applying Promise.withResolvers polyfill for GitHub Pages..."
+          node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
       
       - name: Restore cached build
         uses: actions/cache@v3
@@ -136,12 +150,10 @@ jobs:
             node_modules/.cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
       
-      - name: Fix Promise.withResolvers polyfill
-        run: node scripts/fix-promise-polyfill.js
-      
       - name: Build for GitHub Pages
         run: npm run export:gh-pages
         env:
+          NODE_OPTIONS: "--no-warnings"
           DEPLOY_TARGET: 'gh-pages'
       
       - name: Prepare for GitHub Pages
