@@ -10,7 +10,7 @@
     "dev:turbo": "next dev --turbo",
     "dev:fast": "next dev --turbo --experimental-optimization",
     "dev:legacy": "next dev --experimental-legacy-prebundling",
-    "pre-build": "node scripts/pre-build.js && node scripts/direct-patching.js",
+    "pre-build": "node scripts/fix-rollup-deps.js && node scripts/pre-build.js && node scripts/direct-patching.js",
     "build": "npm run pre-build && next build",
     "build:gh-pages": "npm run pre-build && cross-env DEPLOY_TARGET=gh-pages next build",
     "postbuild": "node scripts/fix-asset-paths.js",
@@ -37,9 +37,10 @@
     "fix-spa-routing": "node scripts/fix-spa-routing.js",
     "fix-hydration": "node scripts/fix-hydration.js",
     "fix-promise-polyfill": "node scripts/fix-promise-polyfill.js",
+    "fix-rollup-deps": "node scripts/fix-rollup-deps.js",
     "direct-patching": "node scripts/direct-patching.js",
     "platform-fix": "node scripts/platform-fix.js",
-    "fix-deps": "npm run platform-fix && npm install --no-optional --ignore-platform --force",
+    "fix-deps": "npm run fix-rollup-deps && npm run platform-fix && npm install --no-optional --ignore-platform --force",
     "build:netlify": "npm run pre-build && next build && node scripts/fix-asset-paths.js",
     "fix-netlify": "npm run clean && npm run pre-build && npm run build:netlify && npm run prepare-netlify && npm run fix-encoding && npm run fix-redirects && npm run fix-spa-routing && npm run fix-hydration && npm run validate-netlify",
     "deploy:netlify": "npm run fix-netlify && npx netlify deploy --prod --dir=out",
@@ -148,18 +149,11 @@
     "pdfjs-dist": {
       "promise": "^8.3.0"
     },
-    "@rollup/rollup-android-arm-eabi": "4.9.5",
-    "@rollup/rollup-android-arm64": "4.9.5",
-    "@rollup/rollup-darwin-arm64": "4.9.5",
-    "@rollup/rollup-darwin-x64": "4.9.5",
-    "@rollup/rollup-linux-arm-gnueabihf": "4.9.5",
-    "@rollup/rollup-linux-arm64-gnu": "4.9.5",
-    "@rollup/rollup-linux-arm64-musl": "4.9.5",
     "@rollup/rollup-linux-x64-gnu": "4.9.5",
     "@rollup/rollup-linux-x64-musl": "4.9.5",
-    "@rollup/rollup-win32-arm64-msvc": "4.9.5",
-    "@rollup/rollup-win32-ia32-msvc": "4.9.5",
-    "@rollup/rollup-win32-x64-msvc": "4.9.5"
+    "@rollup/rollup-win32-x64-msvc": "4.9.5",
+    "@rollup/rollup-darwin-x64": "4.9.5",
+    "esbuild": "0.18.20"
   },
   "main": "index.js",
   "directories": {
@@ -167,20 +161,13 @@
   },
   "license": "ISC",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=16.0.0"
   },
   "resolutions": {
-    "@rollup/rollup-android-arm-eabi": "4.9.5",
-    "@rollup/rollup-android-arm64": "4.9.5",
-    "@rollup/rollup-darwin-arm64": "4.9.5",
-    "@rollup/rollup-darwin-x64": "4.9.5",
-    "@rollup/rollup-linux-arm-gnueabihf": "4.9.5",
-    "@rollup/rollup-linux-arm64-gnu": "4.9.5",
-    "@rollup/rollup-linux-arm64-musl": "4.9.5",
     "@rollup/rollup-linux-x64-gnu": "4.9.5",
     "@rollup/rollup-linux-x64-musl": "4.9.5",
-    "@rollup/rollup-win32-arm64-msvc": "4.9.5",
-    "@rollup/rollup-win32-ia32-msvc": "4.9.5",
-    "@rollup/rollup-win32-x64-msvc": "4.9.5"
+    "@rollup/rollup-win32-x64-msvc": "4.9.5",
+    "@rollup/rollup-darwin-x64": "4.9.5",
+    "esbuild": "0.18.20"
   }
 }
