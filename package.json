@@ -12,7 +12,7 @@
     "dev:legacy": "next dev --experimental-legacy-prebundling",
     "build": "next build",
     "build:gh-pages": "cross-env DEPLOY_TARGET=gh-pages next build",
-    "postbuild": "node scripts/optimize-loading.js",
+    "postbuild": "node scripts/fix-asset-paths.js",
     "start": "next start",
     "lint": "next lint",
     "clean": "if exist .next rd /s /q .next",
@@ -29,8 +29,20 @@
     "deploy:cloudflare": "npm run build && npx wrangler pages deploy .next",
     "dev:cloudflare": "npx wrangler pages dev .next --port 8788",
     "prepare-netlify": "node scripts/prepare-netlify.js",
-    "build:netlify": "next build",
-    "deploy:netlify": "npm run clean && npm run build:netlify && npm run prepare-netlify && npx netlify deploy --prod"
+    "validate-netlify": "node scripts/validate-netlify.js",
+    "init-netlify": "node scripts/init-netlify.js",
+    "fix-encoding": "node scripts/fix-encoding.js",
+    "fix-redirects": "node scripts/fix-redirects.js",
+    "fix-spa-routing": "node scripts/fix-spa-routing.js",
+    "fix-hydration": "node scripts/fix-hydration.js",
+    "fix-promise-polyfill": "node scripts/fix-promise-polyfill.js",
+    "build:netlify": "node scripts/fix-promise-polyfill.js && next build && node scripts/fix-asset-paths.js",
+    "fix-netlify": "npm run clean && npm run fix-promise-polyfill && npm run build:netlify && npm run prepare-netlify && npm run fix-encoding && npm run fix-redirects && npm run fix-spa-routing && npm run fix-hydration && npm run validate-netlify",
+    "deploy:netlify": "npm run fix-netlify && npx netlify deploy --prod --dir=out",
+    "deploy:netlify-manual": "npm run fix-netlify && node scripts/deploy-netlify-manual.js",
+    "netlify": "npm run init-netlify && npm run deploy:netlify",
+    "init-github": "node scripts/init-github.js",
+    "deploy:all": "npm run clean && npm run fix-netlify && npm run deploy:netlify-manual && npm run deploy:gh-pages"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -65,6 +77,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-three/drei": "^10.0.4",
     "@react-three/fiber": "^9.1.0",
+    "chalk": "^5.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "latest",
@@ -107,7 +120,10 @@
     "@types/react-dom": "^19",
     "@types/three": "^0.174.0",
     "autoprefixer": "^10.4.21",
+    "critters": "^0.0.23",
     "cross-env": "^7.0.3",
+    "eslint": "9.26.0",
+    "eslint-config-next": "15.3.1",
     "file-loader": "^6.2.0",
     "gh-pages": "^6.3.0",
     "netlify-cli": "^20.1.1",
@@ -124,6 +140,9 @@
     "@react-three/drei": {
       "react": "^19.0.0",
       "react-dom": "^19.0.0"
+    },
+    "pdfjs-dist": {
+      "promise": "^8.3.0"
     }
   },
   "main": "index.js",

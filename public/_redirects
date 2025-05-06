@@ -1,2 +1,2 @@
-# Redirect semua request ke index.html untuk mendukung navigasi SPA/CSR
+# Redirects file for Netlify SPA
 /* /index.html 200 

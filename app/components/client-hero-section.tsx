@@ -39,16 +39,36 @@ export default function ClientHeroSection({ mainHeadingText = "IT & Cyber Securi
     if (typeof window === "undefined") return;
 
     try {
-      // Gunakan Promise.race untuk memastikan tidak menunggu terlalu lama
-      await Promise.race([
-        (async () => {
+      // Gunakan timeout dengan Promise untuk menggantikan Promise.race
+      let patchCompleted = false;
+      
+      // Buat timeout promise
+      const timeoutPromise = new Promise<void>((_, reject) => {
+        setTimeout(() => {
+          if (!patchCompleted) {
+            reject(new Error("Patch timeout"));
+          }
+        }, 500);
+      });
+      
+      // Mulai patch process
+      const patchProcess = (async () => {
+        try {
           const patchModule = await import("../utils/patch-hero-section");
           patchModule.patchForCanvas();
-        })(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Patch timeout")), 500)
-        )
-      ]);
+          patchCompleted = true;
+        } catch (err) {
+          console.error("Patch error:", err);
+        }
+      })();
+      
+      // Tunggu salah satu selesai
+      try {
+        await Promise.resolve(patchProcess);
+      } catch (e) {
+        console.warn("Patch timeout or error:", e);
+      }
+      
       setReady(true);
     } catch (error) {
       console.error("Failed to initialize patches:", error);

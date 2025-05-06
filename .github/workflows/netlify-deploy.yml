@@ -1,47 +1,51 @@
-name: Deploy to Netlify
+name: Deploy ke Netlify
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
+
+# Secrets yang diperlukan:
+# - NETLIFY_AUTH_TOKEN: Token autentikasi Netlify untuk deployment
+# - NETLIFY_SITE_ID: ID situs Netlify untuk target deployment
+# - GITHUB_TOKEN: Token GitHub disediakan otomatis oleh GitHub Actions
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     
     steps:
-      - name: Checkout 🛎️
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 🔧
-        uses: actions/setup-node@v4
+      - name: Checkout kode
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '16.x'
           cache: 'npm'
       
-      - name: Install dependencies 📦
-        run: |
-          npm install --no-optional --ignore-scripts
-          npm rebuild
-        
-      - name: Build Next.js project 🏗️
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Validasi linting
+        run: npm run lint
+      
+      - name: Build untuk Netlify
         run: npm run build:netlify
-        
-      - name: Run post-build optimizations ✨
-        run: npm run prepare-netlify
-        
-      - name: Deploy to Netlify 🚀
+      
+      - name: Deploy ke Netlify
         uses: nwtgck/actions-netlify@v2
         with:
           publish-dir: './out'
           production-branch: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
+          deploy-message: "Deploy dari GitHub Actions"
           enable-pull-request-comment: true
           enable-commit-comment: true
           overwrites-pull-request-comment: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        timeout-minutes: 5 
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }} 

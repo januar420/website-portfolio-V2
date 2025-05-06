@@ -14,7 +14,8 @@ import Footer from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
 import EmailInit from "@/components/email-init";
 import dynamic from "next/dynamic";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import applyDOMPolyfills from "@/lib/dom-polyfills";
 
 // Import R3F Initializer secara dinamis di dalam Client Component
 // dengan loading fallback berupa null (tidak terlihat) dan batas waktu 2 detik
@@ -30,6 +31,12 @@ export default function ClientLayoutWrapper({
 }: {
   children: React.ReactNode;
 }) {
+  // Terapkan DOM polyfills saat komponen dimount
+  useEffect(() => {
+    // Menerapkan polyfill untuk DOMMatrix dan Promise.withResolvers
+    applyDOMPolyfills();
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <LanguageProvider>

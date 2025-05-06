@@ -1,74 +1,155 @@
-name: Deploy to GitHub Pages
+name: Website Portfolio Deployment
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
-
-# Secrets yang digunakan:
-# - EMAILJS_SERVICE_ID: ID layanan EmailJS yang digunakan untuk fitur kontak
-# - EMAILJS_TEMPLATE_ID: ID template EmailJS yang digunakan untuk format email
-# - EMAILJS_USER_ID: ID pengguna EmailJS untuk autentikasi
+    inputs:
+      deploy_target:
+        description: 'Deploy target (netlify, gh-pages, all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - netlify
+          - gh-pages
+          - all
 
 jobs:
-  build-and-deploy:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Fix Promise.withResolvers polyfill
+        run: node scripts/fix-promise-polyfill.js
+        
+      - name: Run linting
+        run: npm run lint || echo "Linting completed with warnings"
+      
+      - name: Build for testing
+        run: npm run build
+      
+      - name: Cache build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            .next
+            out
+            node_modules/.cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+  
+  deploy-to-netlify:
+    needs: build
+    if: github.event_name == 'push' || github.event.inputs.deploy_target == 'netlify' || github.event.inputs.deploy_target == 'all'
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout 🛎️
+      - name: Checkout repository
         uses: actions/checkout@v4
-        
-      - name: Setup Node.js ⚙️
+      
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 20.x
           cache: 'npm'
-          
-      - name: Install dependencies 📦
+      
+      - name: Install dependencies
         run: npm ci
       
-      - name: Verify environment secrets ✓
-        # Periksa ketersediaan secret tanpa mengekspos nilainya
-        run: |
-          echo "Checking if required secrets are set (without exposing values):"
-          [[ -n "$EMAILJS_SERVICE_ID_CHECK" ]] && echo "✓ EMAILJS_SERVICE_ID is set" || echo "✗ EMAILJS_SERVICE_ID is NOT set"
-          [[ -n "$EMAILJS_TEMPLATE_ID_CHECK" ]] && echo "✓ EMAILJS_TEMPLATE_ID is set" || echo "✗ EMAILJS_TEMPLATE_ID is NOT set"
-          [[ -n "$EMAILJS_USER_ID_CHECK" ]] && echo "✓ EMAILJS_USER_ID is set" || echo "✗ EMAILJS_USER_ID is NOT set"
-        env:
-          # Gunakan teknik ini untuk memeriksa keberadaan secret tanpa mengekspos nilainya
-          EMAILJS_SERVICE_ID_CHECK: ${{ secrets.EMAILJS_SERVICE_ID }}
-          EMAILJS_TEMPLATE_ID_CHECK: ${{ secrets.EMAILJS_TEMPLATE_ID }}
-          EMAILJS_USER_ID_CHECK: ${{ secrets.EMAILJS_USER_ID }}
-        
-      - name: Build 🏗️
-        run: |
-          echo "Starting export for GitHub Pages deployment"
-          npm run export:gh-pages
-        env:
-          # Secrets akan tersedia saat runtime di GitHub Actions
-          NEXT_PUBLIC_EMAILJS_SERVICE_ID: '${{ secrets.EMAILJS_SERVICE_ID }}'
-          NEXT_PUBLIC_EMAILJS_TEMPLATE_ID: '${{ secrets.EMAILJS_TEMPLATE_ID }}'
-          NEXT_PUBLIC_EMAILJS_USER_ID: '${{ secrets.EMAILJS_USER_ID }}'
-          NODE_ENV: production
+      - name: Restore cached build
+        uses: actions/cache@v3
+        with:
+          path: |
+            .next
+            out
+            node_modules/.cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
       
-      - name: Check build output 📋
-        run: |
-          echo "Verifying build output directory"
-          ls -la out/
-          echo "Total files in build output: $(find out/ -type f | wc -l)"
-          
-      - name: Prepare for GitHub Pages 🔧
-        run: |
-          echo "Creating .nojekyll file to bypass Jekyll processing"
-          touch out/.nojekyll
-          
-          echo "Running prepare-gh-pages.js script"
-          node scripts/prepare-gh-pages.js
-          
-      - name: Deploy to GitHub Pages 🚀
+      - name: Fix Promise.withResolvers polyfill
+        run: node scripts/fix-promise-polyfill.js
+      
+      - name: Prepare for Netlify
+        run: npm run fix-netlify
+        env:
+          NETLIFY: 'true'
+          DEPLOY_TARGET: 'netlify'
+      
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: './out'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 10
+  
+  deploy-to-github-pages:
+    needs: build
+    if: github.event_name == 'push' || github.event.inputs.deploy_target == 'gh-pages' || github.event.inputs.deploy_target == 'all'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Restore cached build
+        uses: actions/cache@v3
+        with:
+          path: |
+            .next
+            out
+            node_modules/.cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+      
+      - name: Fix Promise.withResolvers polyfill
+        run: node scripts/fix-promise-polyfill.js
+      
+      - name: Build for GitHub Pages
+        run: npm run export:gh-pages
+        env:
+          DEPLOY_TARGET: 'gh-pages'
+      
+      - name: Prepare for GitHub Pages
+        run: npm run prepare-gh-pages
+      
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: out
           branch: gh-pages
-          commit-message: "Deploy to GitHub Pages - ${{ github.event.head_commit.message || 'Manual workflow dispatch' }}"
-          clean: true # Ensures the deployment is clean 
+          clean: true

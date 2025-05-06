@@ -1,3 +1,7 @@
+# DEPRECATED: File ini tidak lagi direkomendasikan untuk digunakan.
+# Gunakan netlify-deploy.yml sebagai gantinya, yang menggunakan metode build:netlify.
+# Lihat README.md untuk informasi lebih lanjut.
+
 name: Deploy to Netlify
 
 on:
@@ -13,6 +17,11 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Define global environment variables at job level if needed
+    env:
+      NODE_ENV: production
+      DEBUG: "netlify:*"
     
     steps:
       - name: Checkout 🛎️
@@ -39,9 +48,6 @@ jobs:
           NEXT_PUBLIC_EMAILJS_SERVICE_ID: service_5mk1t2z
           NEXT_PUBLIC_EMAILJS_TEMPLATE_ID: template_yj3blyg
           NEXT_PUBLIC_EMAILJS_USER_ID: WrdMD5erXU1TjP0SR
-          # Menambahkan log level untuk debugging
-          NODE_ENV: production
-          DEBUG: "netlify:*"
       
       - name: Check build output 📋
         run: |
@@ -77,7 +83,6 @@ jobs:
           netlify-config-path: ./netlify.toml
           fails-without-credentials: true
         env:
-          # Secrets akan tersedia saat runtime di GitHub Actions
-          NETLIFY_AUTH_TOKEN: '${{ secrets.NETLIFY_AUTH_TOKEN }}'
-          NETLIFY_SITE_ID: '${{ secrets.NETLIFY_SITE_ID }}'
-        timeout-minutes: 5 
+          # Penting: variabel environment Netlify harus didefinisikan di blok env, bukan with
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }} 

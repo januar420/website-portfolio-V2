@@ -1,0 +1,186 @@
+name: Deploy Lengkap ke Netlify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      cache_level:
+        description: 'Level cache: none, basic, full'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - none
+          - basic
+          - full
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    env:
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      NODE_VERSION: 20
+      
+    steps:
+      - name: Checkout Repo 🛎️
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Verifikasi Versi Tools 🧪
+        run: |
+          echo "Node.js: $(node -v)"
+          echo "NPM: $(npm -v)"
+          
+      - name: Instalasi Dependensi 📦
+        run: |
+          echo "Menginstall dependensi dengan fallback untuk legacy peers jika perlu..."
+          npm ci || npm ci --legacy-peer-deps
+      
+      - name: Verifikasi Keberadaan Worker PDF.js 🔍
+        id: verify-pdfjs
+        run: |
+          WORKER_PATH="public/pdf.worker.min.js"
+          if [ -f "$WORKER_PATH" ]; then
+            echo "PDF.js worker ditemukan di public/"
+            echo "worker_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "PDF.js worker tidak ditemukan, akan dibuat saat build"
+            echo "worker_found=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Prepare PDF.js Worker (jika tidak ditemukan) 📄
+        if: steps.verify-pdfjs.outputs.worker_found == 'false'
+        run: |
+          PDFJS_VERSION=$(node -p "require('./package.json').dependencies['pdfjs-dist'].replace('^', '')")
+          echo "Mengunduh PDF.js worker versi $PDFJS_VERSION..."
+          mkdir -p public
+          curl -L "https://unpkg.com/pdfjs-dist@$PDFJS_VERSION/build/pdf.worker.min.js" -o public/pdf.worker.min.js
+      
+      - name: Install Netlify CLI 🌐
+        run: |
+          echo "Menginstall Netlify CLI..."
+          npm install -g netlify-cli
+
+      - name: Verifikasi Netlify CLI 🔍
+        run: |
+          echo "Versi Netlify CLI:"
+          netlify --version
+      
+      - name: Build untuk Netlify 🏗️
+        run: |
+          echo "Menjalankan build untuk Netlify..."
+          npm run build:netlify
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EMAILJS_SERVICE_ID || 'service_5mk1t2z' }}
+          NEXT_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID || 'template_yj3blyg' }}
+          NEXT_PUBLIC_EMAILJS_USER_ID: ${{ secrets.EMAILJS_USER_ID || 'WrdMD5erXU1TjP0SR' }}
+          # Tetapkan DEPLOY_TARGET untuk fungsi build
+          DEPLOY_TARGET: netlify
+      
+      - name: Verifikasi Output Build 📋
+        run: |
+          echo "Memverifikasi direktori output..."
+          if [ -d "out" ]; then
+            echo "✅ Direktori 'out' ditemukan"
+            echo "Total file: $(find out -type f | wc -l)"
+            echo "Memastikan semua file HTML ada..."
+            MISSING_FILES=0
+            for file in index.html 404.html; do
+              if [ ! -f "out/$file" ]; then
+                echo "❌ File 'out/$file' tidak ditemukan"
+                MISSING_FILES=$((MISSING_FILES+1))
+              else
+                echo "✅ File 'out/$file' ditemukan"
+              fi
+            done
+            if [ $MISSING_FILES -gt 0 ]; then
+              echo "⚠️ Beberapa file penting tidak ditemukan!"
+            else
+              echo "✅ Semua file penting ditemukan"
+            fi
+          else
+            echo "❌ Direktori 'out' tidak ditemukan!"
+            echo "Daftar file di direktori saat ini:"
+            ls -la
+            exit 1
+          fi
+        
+      - name: Persiapan untuk Netlify 🔧
+        run: |
+          echo "Menjalankan skrip persiapan Netlify..."
+          node scripts/prepare-netlify.js
+          
+          echo "Memeriksa konfigurasi Netlify..."
+          if [ -f "netlify.toml" ]; then
+            echo "Konfigurasi Netlify ditemukan:"
+            cat netlify.toml
+          else
+            echo "Membuat konfigurasi Netlify minimal..."
+            echo '[build]' > netlify.toml
+            echo '  publish = "out"' >> netlify.toml
+            echo '  command = "npm run build:netlify"' >> netlify.toml
+            echo '[[redirects]]' >> netlify.toml
+            echo '  from = "/*"' >> netlify.toml
+            echo '  to = "/index.html"' >> netlify.toml
+            echo '  status = 200' >> netlify.toml
+            cat netlify.toml
+          fi
+      
+      - name: Proses Fix Encoding dan Redirects 🔄
+        run: |
+          echo "Memproses fix encoding..."
+          npm run fix-encoding || echo "Fix encoding tidak tersedia, melanjutkan..."
+          
+          echo "Memproses redirects..."
+          npm run fix-redirects || echo "Fix redirects tidak tersedia, melanjutkan..."
+          
+          echo "Validasi deployment Netlify..."
+          npm run validate-netlify || echo "Validasi Netlify tidak tersedia, melanjutkan..."
+      
+      - name: Deploy ke Netlify 🚀
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: './out'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy dari GitHub Actions - ${{ github.event.head_commit.message || 'Manual deployment' }}"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+          netlify-config-path: ./netlify.toml
+          fails-without-credentials: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      
+      - name: Ringkasan Deployment 📊
+        if: always()
+        run: |
+          echo "========================================"
+          echo "🔍 RINGKASAN DEPLOYMENT"
+          echo "========================================"
+          echo "✅ Branch: ${GITHUB_REF#refs/heads/}"
+          echo "✅ Commit: ${{ github.sha }}"
+          echo "✅ Waktu: $(date)"
+          echo "✅ Status: ${{ job.status }}"
+          
+          if [ -d "out" ]; then
+            echo "📊 Total file HTML: $(find out -name "*.html" | wc -l)"
+            echo "📊 Total file JS: $(find out -name "*.js" | wc -l)"
+            echo "📊 Total file CSS: $(find out -name "*.css" | wc -l)"
+            echo "📊 Ukuran total: $(du -sh out | cut -f1)"
+          else
+            echo "❌ Direktori out tidak ditemukan"
+          fi
+          echo "========================================" 

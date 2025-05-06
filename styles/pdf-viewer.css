@@ -1,0 +1,125 @@
+/* PDF Viewer Custom Styles */
+
+/* Scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* PDF Container Styles */
+.pdf-viewer-container {
+  position: relative;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Mobile Optimizations */
+.pdf-viewer-mobile .react-pdf__Document {
+  overflow: visible;
+  max-width: 100%;
+}
+
+.pdf-mobile-view {
+  max-width: calc(100vw - 20px);
+  transform-origin: center top;
+}
+
+.pdf-viewer {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page styles with enhanced shadow */
+.pdf-page {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Full-screen optimizations */
+.fullscreen-mode .pdf-page {
+  max-height: calc(100vh - 180px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.fullscreen-pdf {
+  max-height: calc(100vh - 180px);
+}
+
+/* Loading states */
+.pdf-loading {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+/* Text selection */
+.react-pdf__Page__textContent {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* Rotation handling with hardware acceleration */
+.pdf-rotated {
+  will-change: transform;
+}
+
+/* Keyframes for attention animation */
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--primary), 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(var(--primary), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary), 0);
+  }
+}
+
+/* Additional optimizations for touch devices */
+@media (pointer: coarse) {
+  .pdf-viewer-container {
+    touch-action: pan-y;
+  }
+  
+  /* Larger touch targets on mobile */
+  .pdf-mobile-view button {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .pdf-page {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8);
+  }
+  
+  .pdf-viewer {
+    background-color: white;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .pdf-viewer,
+  .pdf-page,
+  .pdf-viewer-container {
+    transition: none !important;
+    animation: none !important;
+  }
+} 

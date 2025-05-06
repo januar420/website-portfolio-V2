@@ -27,6 +27,11 @@ const inter = localFont({
   adjustFontFallback: "Arial",  // Menggunakan Arial sebagai fallback sesuai dengan tipe yang diharapkan
 })
 
+// Konstanta untuk versi PDF.js - pastikan sama dengan yang digunakan di PDF viewer
+const PDFJS_VERSION = '5.2.133';
+const WORKER_URL = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.js`;
+const CMAPS_URL = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/cmaps/`;
+
 export const metadata: Metadata = {
   title: "Januar Galuh Prabakti | Portfolio",
   description: "Professional portfolio of Januar Galuh Prabakti - IT & Cybersecurity Specialist",
@@ -55,6 +60,11 @@ export default function RootLayout({
         {/* Add preload link for local font CSS with cache busting */}
         <link rel="preload" href={fontCssUrl} as="style" />
         <link rel="stylesheet" href={fontCssUrl} />
+
+        {/* Preload PDF.js worker & resources untuk meningkatkan performa PDF viewer */}
+        <link rel="preload" href={WORKER_URL} as="script" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://unpkg.com" />
+        <link rel="preconnect" href="https://unpkg.com" crossOrigin="anonymous" />
       </head>
       <body className={inter.className}>
         {/* Patch React Three Fiber sebelum komponen lainnya dimuat */}

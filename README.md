@@ -338,3 +338,325 @@ npx netlify deploy --prod --dir=out
 ```
 
 Atau, Anda juga bisa men-deploy langsung dari dashboard Netlify dengan cara drag-and-drop folder `out`. 
+
+## Deployment ke Netlify
+
+Proyek ini sudah dikonfigurasi untuk deployment otomatis ke Netlify. Berikut adalah langkah-langkah untuk melakukan deployment:
+
+### Otomatis dengan GitHub Actions
+
+1. Set GitHub Secrets:
+   - `NETLIFY_AUTH_TOKEN`: Token autentikasi dari Netlify
+   - `NETLIFY_SITE_ID`: ID situs Netlify Anda
+
+2. Push ke branch `main` untuk memulai proses deployment otomatis.
+
+### Manual Deployment
+
+1. Install Netlify CLI:
+   ```bash
+   npm install netlify-cli -g
+   ```
+
+2. Build proyek:
+   ```bash
+   npm run build:netlify
+   ```
+
+3. Deploy ke Netlify:
+   ```bash
+   netlify deploy --prod
+   ```
+
+### Troubleshooting Deployment
+
+Jika Anda mengalami masalah dengan path aset:
+
+1. Pastikan script `fix-asset-paths.js` sudah dijalankan:
+   ```bash
+   node scripts/fix-asset-paths.js
+   ```
+
+2. Cek file `netlify.toml` untuk konfigurasi redirect dan header.
+
+3. Jika ada masalah dengan browser lama, polyfill sudah disediakan di `scripts/promise-polyfill.js`. 
+
+## Informasi GitHub Actions
+
+Repositori ini menggunakan GitHub Actions untuk otomatisasi deployment ke berbagai platform. 
+
+### Deployment ke Netlify
+
+Ada dua file workflow GitHub Actions untuk deployment ke Netlify:
+- `.github/workflows/deploy-netlify.yml` - Menggunakan `npm run build` dan skrip `prepare-netlify.js`
+- `.github/workflows/netlify-deploy.yml` - Menggunakan `npm run build:netlify`
+
+**PENTING**: File `netlify-deploy.yml` adalah yang direkomendasikan untuk digunakan karena:
+1. Menggunakan metode build khusus untuk Netlify dengan skrip `build:netlify`
+2. Mencakup validasi linting sebelum deployment
+3. Merupakan file yang terbaru (terakhir dimodifikasi)
+
+Untuk menghindari kebingungan, disarankan untuk hanya menggunakan satu file workflow. Jika Anda mengalami masalah dengan deployment, pastikan rahasia (secrets) GitHub Anda telah dikonfigurasi dengan benar:
+- `NETLIFY_AUTH_TOKEN`: Token autentikasi dari Netlify
+- `NETLIFY_SITE_ID`: ID situs Netlify Anda
+
+### Penggunaan Variabel Environment di GitHub Actions
+
+Saat menggunakan variabel environment dalam GitHub Actions, perhatikan hal-hal berikut:
+
+1. **Penempatan Variabel Environment**:
+   - Untuk variabel yang digunakan selama seluruh proses: Tentukan di level `jobs`
+   - Untuk variabel khusus per langkah: Tentukan di level `steps` dalam blok `env`
+
+2. **Format yang Benar untuk Secrets**:
+   ```yaml
+   # Di level jobs:
+   jobs:
+     my-job:
+       env:
+         MY_SECRET: ${{ secrets.SECRET_NAME }}
+   
+   # Di level steps:
+   steps:
+     - name: Langkah saya
+       env:
+         MY_SECRET: ${{ secrets.SECRET_NAME }}
+   ```
+
+3. **Mengatasi Peringatan "Context access might be invalid"**:
+   - Ini adalah peringatan linting di VSCode dan tidak selalu berarti ada kesalahan
+   - Peringatan ini biasanya muncul ketika mengakses variabel seperti `${{ secrets.SECRET_NAME }}`
+   - Peringatan ini dapat diabaikan jika sintaks Anda benar dan rahasia ada di GitHub
+
+4. **Praktik Terbaik**:
+   - Gunakan komentar untuk mendokumentasikan secrets yang diperlukan di bagian atas file workflow
+   - Verifikasi keberadaan secrets tanpa mengekspos nilainya sebelum build
+   - Gabungkan variabel environment yang sering digunakan ke level `jobs` untuk mengurangi pengulangan
+
+## Panduan Deployment Lengkap ke Netlify
+
+Berikut adalah panduan deployment lengkap dengan workflow GitHub Actions terbaru:
+
+### Metode Terbaik: GitHub Actions Workflow yang Super Robust
+
+1. **Persiapan Repository GitHub**
+   - Pastikan repository GitHub Anda sudah terhubung dengan Netlify
+   - Siapkan secrets GitHub untuk `NETLIFY_AUTH_TOKEN` dan `NETLIFY_SITE_ID`
+
+2. **Aktivasi Workflow Baru**
+   - Workflow terbaru dan paling robust adalah `netlify-deploy-full.yml`
+   - Workflow ini menyertakan:
+     - Deteksi dan instalasi otomatis PDF.js worker
+     - Validasi build dan asset penting
+     - Perbaikan otomatis untuk masalah encoding
+     - Pembuatan ulang file redirects yang optimal
+     - Penanganan error dengan fallback
+
+3. **Menjalankan Deployment**
+   ```bash
+   # Push ke branch main atau jalankan workflow manual dari GitHub
+   git push origin main
+   
+   # ATAU gunakan GitHub UI untuk menjalankan workflow secara manual
+   # dengan pilihan level cache yang berbeda
+   ```
+
+4. **Monitoring Progress**
+   - Pantau progres di tab "Actions" repository GitHub Anda
+   - Cek log untuk setiap tahap deployment
+   - Jika berhasil, Anda akan melihat link ke deployment Netlify di log
+
+5. **Troubleshooting**
+   - Jika terjadi error pada tahap "Build untuk Netlify", periksa:
+     - Ketersediaan PDF.js worker
+     - Kompatibilitas versi Node.js (workflow menggunakan Node 20)
+     - Dependency conflicts (workflow mencoba fallback ke `--legacy-peer-deps`)
+   - Jika error pada tahap "Deploy ke Netlify", periksa:
+     - Validitas token Netlify
+     - Validitas Site ID Netlify
+     - Permisi akses repository
+
+### Verifikasi Deployment
+
+Setelah deployment berhasil, verifikasi situs Anda dengan:
+
+1. **Pengecekan Fungsional**
+   - Buka URL Netlify yang disediakan di output deployment
+   - Uji navigasi antar halaman
+   - Uji fitur kontak (formulir EmailJS)
+   - Uji fitur PDF viewer
+
+2. **Pengecekan Teknis**
+   - Verifikasi PDF.js worker berfungsi dengan benar
+   - Pastikan redirects berfungsi (coba akses URL langsung ke sub-halaman)
+   - Pastikan semua aset (gambar, PDF, dll) dimuat dengan benar
+
+3. **Pengujian Performa**
+   - Jalankan Lighthouse atau PageSpeed Insights untuk evaluasi kinerja
+   - Perhatikan response time dan time-to-first-contentful-paint
+
+### Konfigurasi Tambahan di Dashboard Netlify
+
+Setelah deployment, Anda juga bisa menyesuaikan konfigurasi melalui dashboard Netlify:
+
+1. **Domain Kustom**
+   - Tambahkan domain kustom di `Site settings > Domain management`
+   - Ikuti panduan untuk mengkonfigurasi DNS
+
+2. **Variabel Environment**
+   - Tambahkan variabel environment di `Site settings > Build & deploy > Environment`
+   - Variabel yang perlu ditambahkan:
+     - `NEXT_PUBLIC_EMAILJS_SERVICE_ID`
+     - `NEXT_PUBLIC_EMAILJS_TEMPLATE_ID`
+     - `NEXT_PUBLIC_EMAILJS_USER_ID`
+
+3. **Konfigurasi Build Hook**
+   - Buat build hook di `Site settings > Build & deploy > Build hooks`
+   - Ini berguna untuk pemicu build manual atau dari sistem lain
+
+4. **Header & Redirects**
+   - Pengaturan redirects melalui dashboard di `Site settings > Custom headers`
+   - Semua redirects dari `_redirects` dan `netlify.toml` akan diterapkan otomatis
+
+### Manual Deploy (Alternatif)
+
+Jika Anda ingin deploy secara manual tanpa GitHub Actions:
+
+```bash
+# Persiapan build
+npm ci
+npm run build:netlify
+
+# Persiapan deployment
+npm run prepare-netlify
+npm run fix-encoding
+npm run fix-redirects
+
+# Deploy menggunakan CLI Netlify
+npx netlify deploy --prod --dir=out
+```
+
+## PDF Viewer Implementation
+
+Proyek ini menggunakan PDF.js untuk menampilkan file PDF sertifikasi. Implementasi ini dirancang untuk mengatasi masalah yang sering terjadi dengan PDF.js di lingkungan Server-Side Rendering (SSR) seperti Next.js.
+
+### Struktur Komponen PDF
+
+Implementasi PDF viewer terdiri dari beberapa komponen:
+
+1. **lib/dom-matrix-polyfill.js**: Polyfill untuk `DOMMatrix` dan API terkait yang dibutuhkan oleh PDF.js tetapi tidak tersedia di lingkungan Node.js.
+
+2. **lib/pdf-viewer.tsx**: Komponen React yang mengimpor `react-pdf` dan mengatur worker PDF.js. Komponen ini hanya dijalankan di sisi klien.
+
+3. **lib/pdf-client.tsx**: Wrapper yang menggunakan `dynamic import` untuk memuat komponen PDF hanya di sisi klien, menghindari masalah SSR.
+
+4. **components/certification-pdf-viewer.tsx**: Komponen UI yang menggunakan `ClientPDFViewer` untuk menampilkan PDF dengan kontrol tambahan (zoom, rotate, dll).
+
+### Cara Kerja
+
+1. Semua komponen PDF ditandai dengan `"use client"` untuk memastikan mereka hanya dirender di sisi klien.
+
+2. Polyfill `DOMMatrix` diterapkan di awal untuk mengatasi error yang terjadi saat PDF.js mencoba mengakses API browser yang tidak tersedia di Node.js.
+
+3. PDF.js Worker dimuat secara dinamis dari CDN di sisi klien saja.
+
+4. Komponen PDF diimpor secara dinamis menggunakan `next/dynamic` dengan `ssr: false` untuk memastikan mereka hanya dijalankan di browser.
+
+5. Fallback viewer disediakan untuk kasus di mana PDF.js gagal dimuat atau mengalami error.
+
+### Penggunaan
+
+Untuk menampilkan PDF dalam aplikasi, gunakan `ClientPDFViewer` dari `@/lib/pdf-client`:
+
+```tsx
+import ClientPDFViewer from "@/lib/pdf-client"
+
+// Dalam komponen React
+<ClientPDFViewer 
+  file="/path/to/document.pdf" 
+  pageNumber={1}
+  scale={1.0}
+  width={400}
+  onLoadSuccess={(numPages) => console.log(`Loaded ${numPages} pages`)}
+  onLoadError={(error) => console.error("Failed to load PDF", error)}
+/>
+```
+
+Untuk pengalaman yang lebih lengkap dengan kontrol navigasi, zoom, dan fitur lainnya, gunakan `CertificationPdfViewer` dari `@/components/certification-pdf-viewer`:
+
+```tsx
+import CertificationPdfViewer from "@/components/certification-pdf-viewer"
+
+// Dalam komponen React
+<CertificationPdfViewer 
+  pdfUrl="/path/to/document.pdf"
+  isOpen={true}
+  onClose={() => console.log("PDF viewer closed")}
+  title="Document Title"
+  issuedBy="Issuer"
+  date="1 January 2023"
+/>
+```
+
+### Pemecahan Masalah PDF Viewer
+
+Jika mengalami masalah dengan PDF viewer, periksa hal-hal berikut:
+
+1. **Error `DOMMatrix is not defined`**:
+   - Pastikan `dom-matrix-polyfill.js` dimuat dengan benar
+   - File `dom-polyfills.ts` harus ada dan meng-import `dom-matrix-polyfill.js`
+   - Fungsi `applyDOMPolyfills()` harus dipanggil dalam `useEffect` pada komponen klien
+
+2. **Masalah loading PDF atau worker**:
+   - PDF.js membutuhkan worker untuk berfungsi dengan baik
+   - Pastikan CDN worker URL tersedia dan dapat diakses
+   - URL worker yang digunakan: `https://unpkg.com/pdfjs-dist@5.2.133/build/pdf.worker.min.js`
+
+3. **Masalah rendering PDF**:
+   - Komponen PDF harus dimuat secara dinamis dengan `dynamic import` dan `ssr: false`
+   - Pastikan impor `react-pdf` hanya terjadi di sisi klien
+   - Gunakan fallback untuk menampilkan loading indicator saat PDF sedang dimuat
+
+4. **File yang diperlukan untuk PDF viewer**:
+   - `lib/dom-matrix-polyfill.js`: Polyfill dasar untuk DOMMatrix
+   - `lib/dom-polyfills.ts`: Fungsi helper untuk menerapkan polyfills
+   - `lib/pdf-viewer.tsx`: Komponen dasar PDF viewer
+   - `lib/pdf-client.tsx`: Client-side wrapper dengan dynamic import
+   - `components/certification-pdf-viewer.tsx`: Komponen UI lengkap
+
+### Fitur PDF Viewer yang Diperbarui
+
+PDF Viewer telah diperbarui dengan fitur-fitur baru yang membuat tampilan dan interaksi lebih baik:
+
+#### Tampilan yang Lebih Modern
+- **Desain UI yang lebih elegan** - Dengan efek backdrop blur, bayangan halus, dan gradien
+- **Animasi dan transisi** - Menggunakan Framer Motion untuk animasi halus saat loading dan navigasi
+- **Responsivitas penuh** - Bekerja dengan baik di perangkat mobile dan desktop
+- **Mode gelap/terang** - Menyesuaikan dengan tema aplikasi secara otomatis
+
+#### Fitur Interaktif
+- **Zoom in/out** - Slider zoom untuk mobile dan tombol untuk desktop
+- **Rotasi dokumen** - Putar dokumen dengan mudah
+- **Fullscreen mode** - Lihat PDF dalam mode layar penuh
+- **Panel informasi** - Tampilkan metadata dokumen seperti judul, penerbit, tanggal
+- **Navigasi keyboard** - Tombol panah untuk pindah halaman dan ESC untuk keluar
+
+#### Penanganan Error yang Lebih Baik
+- **Fallback viewer** - Jika PDF.js gagal, akan otomatis beralih ke viewer bawaan browser
+- **Pesan error yang informatif** - Membantu pengguna memahami masalah yang terjadi
+- **Opsi alternatif** - Selalu menyediakan opsi untuk mengunduh atau membuka PDF secara langsung
+
+#### Cara Menggunakan Fitur Baru
+```tsx
+<CertificationPdfViewer 
+  pdfUrl="/path/to/document.pdf"
+  isOpen={true}
+  onClose={() => console.log("PDF viewer closed")}
+  title="Document Title"
+  issuedBy="Issuer"
+  date="1 January 2023"
+  fileSize="2.4 MB" // Opsional
+/>
+```
+
+Dengan semua perbaikan ini, PDF Viewer tidak hanya menjadi lebih fungsional tetapi juga memberikan pengalaman yang lebih menyenangkan bagi pengguna saat melihat sertifikasi dan dokumen PDF lainnya.

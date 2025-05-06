@@ -199,7 +199,10 @@ const baseTranslations: TranslationsType = {
     "resume.downloadSuccess": "Success!",
     "resume.downloadSuccessDesc": "Your CV has been downloaded successfully",
     "resume.downloadError": "Error",
-    "resume.downloadErrorDesc": "Failed to download CV. Please try again later."
+    "resume.downloadErrorDesc": "Failed to download CV. Please try again later.",
+    "certifications.fallbackViewerMessage": "PDF preview is not available in this browser. You can download or open the PDF directly.",
+    "certifications.downloadPdf": "Download PDF",
+    "certifications.openInBrowser": "Open in Browser"
   },
   id: {
     "hero.title": "Praktisi IT & Keamanan Siber",
@@ -363,7 +366,10 @@ const baseTranslations: TranslationsType = {
     "resume.downloadSuccess": "Berhasil!",
     "resume.downloadSuccessDesc": "CV Anda telah berhasil diunduh",
     "resume.downloadError": "Error",
-    "resume.downloadErrorDesc": "Gagal mengunduh CV. Silakan coba lagi nanti."
+    "resume.downloadErrorDesc": "Gagal mengunduh CV. Silakan coba lagi nanti.",
+    "certifications.fallbackViewerMessage": "Pratinjau PDF tidak tersedia di browser ini. Anda dapat mengunduh atau membuka PDF secara langsung.",
+    "certifications.downloadPdf": "Unduh PDF",
+    "certifications.openInBrowser": "Buka di Browser"
   },
   // Contoh terjemahan bahasa Spanyol (sebagian)
   es: {

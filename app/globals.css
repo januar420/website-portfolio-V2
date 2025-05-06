@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import CSS khusus untuk PDF viewer */
+@import '../styles/pdf-viewer.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;

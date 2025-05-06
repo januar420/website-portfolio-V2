@@ -1,106 +1,93 @@
-# Konfigurasi Build Netlify
 [build]
   publish = "out"
-  command = "npm run build:netlify && npm run prepare-netlify"
+  command = "npm run build:netlify"
 
 [build.environment]
-  NODE_VERSION = "18"
-  NPM_VERSION = "9"
-  NETLIFY_USE_YARN = "false"
-  # Untuk debugging
-  NEXT_TELEMETRY_DISABLED = "1"
-  # Untuk mengatasi masalah platform
-  NPM_FLAGS = "--no-optional --ignore-scripts"
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
+  NEXT_PUBLIC_EMAILJS_SERVICE_ID = "service_5mk1t2z"
+  NEXT_PUBLIC_EMAILJS_TEMPLATE_ID = "template_yj3blyg"
+  NEXT_PUBLIC_EMAILJS_USER_ID = "WrdMD5erXU1TjP0SR"
+  # Fix untuk masalah Next.js App Router
+  NEXT_PRIVATE_TARGET = "server"
+  # Tidak menggunakan i18n di App Router
+  NEXT_PUBLIC_DISABLE_I18N = "true"
 
-# Plugin untuk Next.js
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-# ===== HEADERS =====
-
-# Headers keamanan utama untuk semua halaman
+# Pengaturan header untuk file PDF.js worker dan resource
 [[headers]]
-  for = "/*"
+  for = "/pdf.worker*.js"
   [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' unpkg.com cdnjs.cloudflare.com jsdelivr.net; style-src 'self' 'unsafe-inline' fonts.googleapis.com; img-src 'self' data: blob: *.githubusercontent.com; font-src 'self' fonts.gstatic.com data:; connect-src 'self' api.emailjs.com unpkg.com cdnjs.cloudflare.com jsdelivr.net; worker-src 'self' blob:; frame-src 'self' *.netlify.app;"
-    # Penting untuk interaktivitas komponen
-    Feature-Policy = "autoplay 'self'; camera 'none'; microphone 'none'; payment 'none'"
-    # Memastikan komponen interaktif dapat berfungsi
-    Interaction-Policy = "allow-gestures-and-clicks 'self'; allow-modals 'self'"
+    Access-Control-Allow-Origin = "*"
+    Content-Type = "application/javascript"
+    Cache-Control = "public, max-age=31536000"
 
-# Konfigurasi caching untuk file statis
-[[headers]]
-  for = "/_next/static/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.css"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
+# Pengaturan header untuk font dan asset statis
 [[headers]]
   for = "/*.woff2"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# Konfigurasi untuk PDF Worker - Yang diperbarui
-[[headers]]
-  for = "/pdf.worker.min.js"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Origin, Accept"
-    Cache-Control = "public, max-age=31536000, immutable"
-    Content-Type = "application/javascript"
-
-# Konfigurasi untuk font PDF dan cmaps
-[[headers]]
-  for = "/cmaps/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000"
 
 [[headers]]
-  for = "/standard_fonts/*"
+  for = "/*.webp"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000"
 
-# ===== REDIRECTS =====
+# Pengaturan header untuk file PDF dan dokumen
+[[headers]]
+  for = "/*.pdf"
+  [headers.values]
+    Content-Type = "application/pdf"
+    Content-Disposition = "inline"
+    Cache-Control = "public, max-age=604800"
 
-# Pengalihan utama untuk SPA routing
+# Pengaturan redirect khusus Next.js
+# Pertama, tangani asset statis
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/_next/static/*"
+  to = "/_next/static/:splat"
   status = 200
-  
-# Lindungi rute API (jika ada)
+
+# Tangani file-file di root
+[[redirects]]
+  from = "/pdf.worker.min.js"
+  to = "/pdf.worker.min.js"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/pdf-worker-fallback.js"
+  to = "/pdf-worker-fallback.js"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/promise-polyfill.js"
+  to = "/promise-polyfill.js"
+  status = 200
+  force = true
+
+# API routes harus ditangani dengan 404 karena Next.js static export tidak mendukung API
 [[redirects]]
   from = "/api/*"
   to = "/404.html"
   status = 404
 
-# Fallback untuk 404
+# Semua halaman lain harus dikembalikan ke index.html secara default (SPA fallback)
 [[redirects]]
   from = "/*"
-  to = "/404.html"
-  status = 404
-  force = false
-  conditions = {Response = {status = [404]}}
+  to = "/index.html"
+  status = 200
 
-# ===== OPTIMASI BUILD =====
+# Info situs
+[Settings]
+  ID = "02a6fa83-7aa8-4d12-9d14-db7279b92914"
+  Name = "musical-souffle-ad6848"
 
+# Plugin nextjs
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Integrasi dengan GitHub Actions
 [build.processing]
   skip_processing = false
 
@@ -116,4 +103,14 @@
   pretty_urls = true
 
 [build.processing.images]
-  compress = true 
+  compress = true
+
+# Cache Control
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()" 

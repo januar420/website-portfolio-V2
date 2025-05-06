@@ -1,98 +1,59 @@
 /**
- * React Three Fiber Early Patch Script
+ * React Three Fiber Patches
  * 
- * Script ini dijalankan sebelum React Three Fiber dimuat
- * untuk mencegah error "Cannot read properties of undefined (reading 'ReactCurrentOwner')"
+ * File ini berisi berbagai patches yang diperlukan untuk memastikan React Three Fiber
+ * berjalan dengan baik di berbagai lingkungan.
  */
 
-;(function() {
-  console.info('[R3F-EARLY-PATCH] Applying early patches for React Three Fiber');
-  
-  // 1. Define ReactCurrentOwner pada objek global
-  if (typeof window !== 'undefined' && !window.ReactCurrentOwner) {
+// Polyfill untuk Promise.withResolvers
+if (typeof Promise.withResolvers !== 'function') {
+  console.info('[POLYFILL] Adding Promise.withResolvers polyfill');
+  Promise.withResolvers = function() {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+}
+
+// Patch untuk ReactCurrentOwner yang dibutuhkan oleh React Three Fiber
+if (typeof window !== 'undefined') {
+  // Setup ReactCurrentOwner
+  if (!window.ReactCurrentOwner) {
+    console.info("[R3F-PATCH] Setting up window.ReactCurrentOwner");
     window.ReactCurrentOwner = { current: null };
-    console.info('[R3F-EARLY-PATCH] Added window.ReactCurrentOwner');
   }
   
-  // 2. Define global React objek jika belum ada
-  if (typeof window !== 'undefined' && !window.React) {
-    window.React = {
-      __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: {
-        ReactCurrentOwner: { current: null },
-        ReactCurrentBatchConfig: { transition: 0, suspense: null }
-      }
+  // Patch untuk ReactCurrentBatchConfig di React 19
+  if (!window.ReactCurrentBatchConfig) {
+    console.info("[R3F-PATCH] Setting up window.ReactCurrentBatchConfig");
+    window.ReactCurrentBatchConfig = { 
+      transition: 0,
+      suspense: null,
+      thenableState: null // Properti baru di React 19
     };
-    console.info('[R3F-EARLY-PATCH] Created mock React with internals');
   }
   
-  // 3. Setup handler untuk webpack dynamic imports
-  // Ini memastikan patch terjadi sebelum modul R3F dimuat
-  const originalImport = window.__webpack_require__ || (window.webpackJsonp && window.webpackJsonp.push);
-  if (originalImport) {
-    try {
-      const patchedModules = new Set();
-      
-      // Intercept untuk webpack 4+
-      if (window.__webpack_require__ && window.__webpack_require__.e) {
-        const originalLoadChunk = window.__webpack_require__.e;
-        window.__webpack_require__.e = function(chunkId) {
-          console.info('[R3F-EARLY-PATCH] Loading chunk:', chunkId);
-          
-          // Pastikan patch aktif untuk setiap chunk
-          if (typeof window !== 'undefined' && !window.ReactCurrentOwner) {
-            window.ReactCurrentOwner = { current: null };
-          }
-          
-          return originalLoadChunk.apply(this, arguments);
-        };
-        console.info('[R3F-EARLY-PATCH] Patched webpack chunk loading');
-      }
-      
-      // Untuk webpack 5+
-      if (window.__webpack_require__ && window.__webpack_require__.f) {
-        const originalEnsure = window.__webpack_require__.f.ensure;
-        if (originalEnsure) {
-          window.__webpack_require__.f.ensure = function(chunkId, promises) {
-            console.info('[R3F-EARLY-PATCH] Ensuring chunk:', chunkId);
-            
-            // Apply patches before loading
-            if (typeof window !== 'undefined' && !window.ReactCurrentOwner) {
-              window.ReactCurrentOwner = { current: null };
-            }
-            
-            return originalEnsure.apply(this, arguments);
-          };
-          console.info('[R3F-EARLY-PATCH] Patched webpack ensure');
-        }
-      }
-    } catch (e) {
-      console.warn('[R3F-EARLY-PATCH] Error patching webpack:', e);
+  // Patch untuk window.performance
+  if (window.performance && typeof window.performance === 'object') {
+    // Pastikan _updatedFibers adalah Set
+    if (!window.performance._updatedFibers || !(window.performance._updatedFibers instanceof Set)) {
+      console.info("[R3F-PATCH] Setting up performance._updatedFibers");
+      window.performance._updatedFibers = new Set();
+    }
+    
+    // Untuk Three.js v0.174.0+ dan React 19
+    if (!window.performance._updatedFibersTimestamps || !(window.performance._updatedFibersTimestamps instanceof Map)) {
+      console.info("[R3F-PATCH] Setting up performance._updatedFibersTimestamps");
+      window.performance._updatedFibersTimestamps = new Map();
     }
   }
   
-  // 4. Setup error handler
-  window.addEventListener('error', function(event) {
-    if (event.error && event.error.message && 
-        (event.error.message.includes('ReactCurrentOwner') || 
-         event.error.message.includes('Cannot read properties of undefined'))) {
-      
-      console.warn('[R3F-EARLY-PATCH] Caught ReactCurrentOwner error');
-      
-      if (typeof window !== 'undefined') {
-        window.ReactCurrentOwner = window.ReactCurrentOwner || { current: null };
-        
-        // Tambahkan ciri-ciri untuk memberitahu dev tools bahwa patch sudah diterapkan
-        window.__R3F_PATCHED = true;
-        window.__R3F_PATCH_TIMESTAMP = new Date().toISOString();
-      }
-      
-      // Mencegah error muncul di console
-      event.preventDefault();
-      
-      return true;
-    }
-    return false;
-  }, true);
+  // Set flag bahwa patches sudah diterapkan
+  window.__R3F_PATCHED = true;
+  window.__R3F_PATCHED_VERSION = "0.174.0_React19";
   
-  console.info('[R3F-EARLY-PATCH] Early patches applied successfully');
-})(); 
+  console.info("[R3F-PATCH] All patches have been applied successfully!");
+} 

@@ -16,8 +16,76 @@ const PDFJS_VERSION = '5.2.133';
 const outDir = path.join(__dirname, '..', 'out');
 if (!fs.existsSync(outDir)) {
   console.error('❌ Output directory does not exist!');
-  console.log('Creating output directory...');
-  fs.mkdirSync(outDir, { recursive: true });
+  console.log('Checking for .next/standalone or .next directories...');
+  
+  // Periksa apakah kita menggunakan 'output: export' di next.config.js
+  const nextStaticDir = path.join(__dirname, '..', '.next', 'static');
+  const nextStandaloneDir = path.join(__dirname, '..', '.next', 'standalone');
+  
+  if (fs.existsSync(nextStaticDir)) {
+    console.log('Found .next/static directory, copying to out...');
+    fs.mkdirSync(outDir, { recursive: true });
+    
+    // Salin semua dari .next/static ke out
+    const copyDirRecursiveSync = (source, target) => {
+      if (!fs.existsSync(target)) {
+        fs.mkdirSync(target, { recursive: true });
+      }
+      
+      const files = fs.readdirSync(source);
+      
+      files.forEach(file => {
+        const currentSource = path.join(source, file);
+        const currentTarget = path.join(target, file);
+        
+        if (fs.statSync(currentSource).isDirectory()) {
+          copyDirRecursiveSync(currentSource, currentTarget);
+        } else {
+          fs.copyFileSync(currentSource, currentTarget);
+        }
+      });
+    };
+    
+    try {
+      copyDirRecursiveSync(path.join(__dirname, '..', '.next'), outDir);
+      console.log('✅ Copied .next contents to out directory');
+    } catch (error) {
+      console.error('❌ Error copying .next contents:', error.message);
+    }
+  } else if (fs.existsSync(nextStandaloneDir)) {
+    console.log('Found .next/standalone directory, copying to out...');
+    fs.mkdirSync(outDir, { recursive: true });
+    
+    try {
+      const copyDirRecursiveSync = (source, target) => {
+        if (!fs.existsSync(target)) {
+          fs.mkdirSync(target, { recursive: true });
+        }
+        
+        const files = fs.readdirSync(source);
+        
+        files.forEach(file => {
+          const currentSource = path.join(source, file);
+          const currentTarget = path.join(target, file);
+          
+          if (fs.statSync(currentSource).isDirectory()) {
+            copyDirRecursiveSync(currentSource, currentTarget);
+          } else {
+            fs.copyFileSync(currentSource, currentTarget);
+          }
+        });
+      };
+      
+      copyDirRecursiveSync(nextStandaloneDir, outDir);
+      console.log('✅ Copied .next/standalone contents to out directory');
+    } catch (error) {
+      console.error('❌ Error copying .next/standalone contents:', error.message);
+    }
+  } else {
+    console.error('❌ No output directories found. Make sure your next.config.js has "output: export" set');
+    console.log('Creating empty output directory anyway...');
+    fs.mkdirSync(outDir, { recursive: true });
+  }
 }
 
 // Fungsi helper untuk menyalin file
@@ -43,14 +111,14 @@ const ensureDir = (dir) => {
 // Fungsi untuk membuat _redirects file
 const createRedirects = () => {
   try {
-    const redirectsContent = `
-# Redirects file for Netlify SPA
-/* /index.html 200
+    const redirectsContent = `# Redirects untuk Next.js SPA
+/* /index.html 200!
+/_next/* /_next/:splat 200
 
-# Protect API routes for static hosting
-/api/* /404.html 404
-`;
-    fs.writeFileSync(path.join(outDir, '_redirects'), redirectsContent.trim());
+# Protect API routes
+/api/* /404.html 404`;
+    
+    fs.writeFileSync(path.join(outDir, '_redirects'), redirectsContent, { encoding: 'ascii' });
     console.log('✅ Created _redirects file for Netlify');
   } catch (error) {
     console.error('❌ Error creating _redirects file:', error.message);
@@ -290,19 +358,136 @@ const createPdfJsFallback = () => {
   }
 };
 
-// Eksekusi semua persiapan
+// Tambahkan polyfill untuk Promise.withResolvers jika belum ada
 try {
-  console.log('🚀 Starting Netlify deployment preparation...');
+  // Polyfill utama
+  const promisePolyfillContent = `
+  /**
+   * Polyfill untuk Promise.withResolvers
+   * 
+   * Fitur ini tersedia di browser modern dan Node.js 20+, tetapi tidak di Node.js 18
+   * yang digunakan pada build environment Netlify
+   */
+  if (typeof Promise.withResolvers !== 'function') {
+    console.info('[POLYFILL] Adding Promise.withResolvers polyfill');
+    Promise.withResolvers = function() {
+      let resolve, reject;
+      const promise = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    };
+  }`;
+
+  // Tulis file promise-polyfill.js ke output
+  fs.writeFileSync(path.join(outDir, 'promise-polyfill.js'), promisePolyfillContent);
+  console.log('✅ Written promise-polyfill.js to output directory');
+
+  // Tambahkan polyfill ke dalam file HTML
+  const indexHtmlPath = path.join(outDir, 'index.html');
+  if (fs.existsSync(indexHtmlPath)) {
+    let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+    
+    // Inject script sebelum </head>
+    if (!indexHtml.includes('promise-polyfill.js')) {
+      indexHtml = indexHtml.replace(
+        '</head>',
+        '<script src="/promise-polyfill.js"></script></head>'
+      );
+      fs.writeFileSync(indexHtmlPath, indexHtml);
+      console.log('✅ Injected Promise.withResolvers polyfill into index.html');
+    }
+  }
+
+  // Cek dan salin pdf-worker-wrapper.js jika belum ada
+  const sourcePdfWorkerWrapper = path.join('public', 'pdf-worker-wrapper.js');
+  const destPdfWorkerWrapper = path.join(outDir, 'pdf-worker-wrapper.js');
   
+  if (fs.existsSync(sourcePdfWorkerWrapper)) {
+    fs.copyFileSync(sourcePdfWorkerWrapper, destPdfWorkerWrapper);
+    console.log('✅ Copied pdf-worker-wrapper.js to output directory');
+  } else {
+    // Buat file wrapper jika tidak ada
+    const pdfWorkerWrapperContent = `
+    /**
+     * PDF.js Worker Wrapper
+     * 
+     * File ini menerapkan polyfill untuk Promise.withResolvers sebelum memuat
+     * pdf.worker.min.js yang asli. Ini mengatasi masalah kompatibilitas
+     * dengan lingkungan Node.js atau browser lama.
+     */
+    
+    // Menerapkan polyfill Promise.withResolvers jika tidak tersedia
+    if (typeof Promise.withResolvers !== 'function') {
+      console.info('[PDF-WORKER] Adding Promise.withResolvers polyfill');
+      Promise.withResolvers = function() {
+        let resolve, reject;
+        const promise = new Promise((res, rej) => {
+          resolve = res;
+          reject = rej;
+        });
+        return { promise, resolve, reject };
+      };
+    }
+    
+    // Load worker asli
+    importScripts('./pdf.worker.min.js');`;
+    
+    fs.writeFileSync(destPdfWorkerWrapper, pdfWorkerWrapperContent);
+    console.log('✅ Created pdf-worker-wrapper.js in output directory');
+  }
+} catch (error) {
+  console.error('❌ Error adding polyfill files:', error);
+}
+
+// Fungsi untuk menyalin file dari public ke out
+const copyPublicDir = () => {
+  const publicDir = path.join(__dirname, '..', 'public');
+  if (fs.existsSync(publicDir)) {
+    console.log('Menyalin konten public ke direktori out...');
+    
+    try {
+      const copyDirRecursiveSync = (source, target) => {
+        if (!fs.existsSync(target)) {
+          fs.mkdirSync(target, { recursive: true });
+        }
+        
+        const files = fs.readdirSync(source);
+        
+        files.forEach(file => {
+          // Abaikan subfolder 'cleaned-deployment'
+          if (file === 'cleaned-deployment') return;
+          
+          const currentSource = path.join(source, file);
+          const currentTarget = path.join(target, file);
+          
+          if (fs.statSync(currentSource).isDirectory()) {
+            copyDirRecursiveSync(currentSource, currentTarget);
+          } else {
+            fs.copyFileSync(currentSource, currentTarget);
+          }
+        });
+      };
+      
+      copyDirRecursiveSync(publicDir, outDir);
+      console.log('✅ Berhasil menyalin konten public ke direktori out');
+    } catch (error) {
+      console.error('❌ Error menyalin public ke out:', error.message);
+    }
+  }
+};
+
+// Panggil fungsi-fungsi utama
+const main = () => {
+  copyPublicDir(); // Salin file dari public ke out terlebih dahulu
   createRedirects();
   copyPdfWorker();
   setupCmapsAndFonts();
-  createPdfJsFallback();
   ensureNetlifyConfig();
   create404Page();
-  
-  console.log('✅ Netlify deployment preparation completed successfully!');
-} catch (error) {
-  console.error('❌ Error during Netlify preparation:', error);
-  process.exit(1);
-} 
+  createPdfJsFallback();
+};
+
+// Jalankan script
+main(); 

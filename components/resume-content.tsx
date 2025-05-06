@@ -27,12 +27,17 @@ import {
   Cpu,
   Database,
   Lock,
+  Brain,
+  Download,
+  Calendar,
+  Globe
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DownloadCVButton from "./download-cv-button"
 import { useLanguage } from "./language-provider"
+import { useRouter } from "next/navigation"
 
 // Function untuk menghasilkan gambar abstrak yang berbeda-beda - disederhanakan
 function generateAbstractBackgroundImage(width = 1200, height = 600, seed = Math.random() * 1000) {
@@ -75,6 +80,7 @@ export default function ResumeContent() {
   const skillsRef = useRef(null)
   const experienceRef = useRef(null)
   const educationRef = useRef(null)
+  const router = useRouter()
 
   const bioInView = useInView(bioRef, { once: true, amount: 0.3 })
   const skillsInView = useInView(skillsRef, { once: true, amount: 0.3 })
@@ -87,6 +93,10 @@ export default function ResumeContent() {
   const [generatedBackground, setGeneratedBackground] = useState<string>("")
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [isMobile, setIsMobile] = useState(false)
+  const [viewportHeight, setViewportHeight] = useState("100vh")
+  const [showJobDetails, setShowJobDetails] = useState<boolean[]>([])
+  const detailsRef = useRef<(HTMLDivElement | null)[]>([])
+  const animationRef = useRef<number>(0)
 
   // Function untuk memilih gambar header secara acak
   useEffect(() => {
@@ -776,16 +786,32 @@ export default function ResumeContent() {
                     variant="outline"
                     className="rounded-full px-6 py-6 border-primary/50 hover:border-primary hover:bg-primary/5 transition-all duration-300 transform hover:scale-105"
                     onClick={() => {
-                      // Jika berada di halaman resume, kembali ke halaman utama dan arahkan ke bagian kontak
-                      if (window.location.pathname === "/resume") {
-                        window.location.href = "/#contact";
-                      } else {
-                        // Jika sudah berada di halaman utama, scroll ke bagian kontak
-                        const contactSection = document.getElementById("contact");
-                        if (contactSection) {
-                          contactSection.scrollIntoView({ behavior: "smooth" });
-                          // Update URL tanpa reload halaman
-                          window.history.pushState({}, "", "/#contact");
+                      try {
+                        // Jika berada di halaman resume, kembali ke halaman utama dan arahkan ke bagian kontak
+                        if (typeof window !== "undefined" && window.location.pathname === "/resume") {
+                          // Menggunakan router untuk navigasi yang lebih baik di Next.js
+                          router.push("/#contact");
+                        } else {
+                          // Jika sudah berada di halaman utama, scroll ke bagian kontak
+                          const contactSection = document.getElementById("contact");
+                          if (contactSection) {
+                            contactSection.scrollIntoView({ behavior: "smooth" });
+                            // Update URL tanpa reload halaman
+                            if (typeof window !== "undefined") {
+                              window.history.pushState({}, "", "/#contact");
+                            }
+                          } else {
+                            // Jika elemen contact tidak ditemukan, mungkin kita perlu navigasi ke halaman utama
+                            if (typeof window !== "undefined") {
+                              router.push("/#contact");
+                            }
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Error navigating to contact section:", error);
+                        // Fallback jika terjadi kesalahan - menggunakan cara tradisional
+                        if (typeof window !== "undefined") {
+                          window.location.href = "/#contact";
                         }
                       }
                     }}
@@ -1369,16 +1395,32 @@ export default function ResumeContent() {
               <Button 
                 className="rounded-full px-8 py-6 bg-gradient-to-r from-primary to-primary-foreground hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:scale-105"
                 onClick={() => {
-                  // Jika berada di halaman resume, kembali ke halaman utama dan arahkan ke bagian kontak
-                  if (window.location.pathname === "/resume") {
-                    window.location.href = "/#contact";
-                  } else {
-                    // Jika sudah berada di halaman utama, scroll ke bagian kontak
-                    const contactSection = document.getElementById("contact");
-                    if (contactSection) {
-                      contactSection.scrollIntoView({ behavior: "smooth" });
-                      // Update URL tanpa reload halaman
-                      window.history.pushState({}, "", "/#contact");
+                  try {
+                    // Jika berada di halaman resume, kembali ke halaman utama dan arahkan ke bagian kontak
+                    if (typeof window !== "undefined" && window.location.pathname === "/resume") {
+                      // Menggunakan router untuk navigasi yang lebih baik di Next.js
+                      router.push("/#contact");
+                    } else {
+                      // Jika sudah berada di halaman utama, scroll ke bagian kontak
+                      const contactSection = document.getElementById("contact");
+                      if (contactSection) {
+                        contactSection.scrollIntoView({ behavior: "smooth" });
+                        // Update URL tanpa reload halaman
+                        if (typeof window !== "undefined") {
+                          window.history.pushState({}, "", "/#contact");
+                        }
+                      } else {
+                        // Jika elemen contact tidak ditemukan, mungkin kita perlu navigasi ke halaman utama
+                        if (typeof window !== "undefined") {
+                          router.push("/#contact");
+                        }
+                      }
+                    }
+                  } catch (error) {
+                    console.error("Error navigating to contact section:", error);
+                    // Fallback jika terjadi kesalahan - menggunakan cara tradisional
+                    if (typeof window !== "undefined") {
+                      window.location.href = "/#contact";
                     }
                   }
                 }}
