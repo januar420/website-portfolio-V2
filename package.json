@@ -38,6 +38,8 @@
     "fix-hydration": "node scripts/fix-hydration.js",
     "fix-promise-polyfill": "node scripts/fix-promise-polyfill.js",
     "direct-patching": "node scripts/direct-patching.js",
+    "platform-fix": "node scripts/platform-fix.js",
+    "fix-deps": "npm run platform-fix && npm install --no-optional --ignore-platform --force",
     "build:netlify": "npm run pre-build && next build && node scripts/fix-asset-paths.js",
     "fix-netlify": "npm run clean && npm run pre-build && npm run build:netlify && npm run prepare-netlify && npm run fix-encoding && npm run fix-redirects && npm run fix-spa-routing && npm run fix-hydration && npm run validate-netlify",
     "deploy:netlify": "npm run fix-netlify && npx netlify deploy --prod --dir=out",
@@ -136,16 +138,28 @@
   },
   "overrides": {
     "@react-three/fiber": {
-      "react": "^19.0.0",
-      "react-dom": "^19.0.0"
+      "react": "^18.0.0",
+      "react-dom": "^18.0.0"
     },
     "@react-three/drei": {
-      "react": "^19.0.0",
-      "react-dom": "^19.0.0"
+      "react": "^18.0.0",
+      "react-dom": "^18.0.0"
     },
     "pdfjs-dist": {
       "promise": "^8.3.0"
-    }
+    },
+    "@rollup/rollup-android-arm-eabi": "4.9.5",
+    "@rollup/rollup-android-arm64": "4.9.5",
+    "@rollup/rollup-darwin-arm64": "4.9.5",
+    "@rollup/rollup-darwin-x64": "4.9.5",
+    "@rollup/rollup-linux-arm-gnueabihf": "4.9.5",
+    "@rollup/rollup-linux-arm64-gnu": "4.9.5",
+    "@rollup/rollup-linux-arm64-musl": "4.9.5",
+    "@rollup/rollup-linux-x64-gnu": "4.9.5",
+    "@rollup/rollup-linux-x64-musl": "4.9.5",
+    "@rollup/rollup-win32-arm64-msvc": "4.9.5",
+    "@rollup/rollup-win32-ia32-msvc": "4.9.5",
+    "@rollup/rollup-win32-x64-msvc": "4.9.5"
   },
   "main": "index.js",
   "directories": {
@@ -156,17 +170,17 @@
     "node": ">=18.0.0"
   },
   "resolutions": {
-    "@rollup/rollup-android-arm-eabi": "4.x.x",
-    "@rollup/rollup-android-arm64": "4.x.x",
-    "@rollup/rollup-darwin-arm64": "4.x.x",
-    "@rollup/rollup-darwin-x64": "4.x.x",
-    "@rollup/rollup-linux-arm-gnueabihf": "4.x.x",
-    "@rollup/rollup-linux-arm64-gnu": "4.x.x",
-    "@rollup/rollup-linux-arm64-musl": "4.x.x",
-    "@rollup/rollup-linux-x64-gnu": "4.x.x",
-    "@rollup/rollup-linux-x64-musl": "4.x.x",
-    "@rollup/rollup-win32-arm64-msvc": "4.x.x",
-    "@rollup/rollup-win32-ia32-msvc": "4.x.x",
-    "@rollup/rollup-win32-x64-msvc": "4.x.x"
+    "@rollup/rollup-android-arm-eabi": "4.9.5",
+    "@rollup/rollup-android-arm64": "4.9.5",
+    "@rollup/rollup-darwin-arm64": "4.9.5",
+    "@rollup/rollup-darwin-x64": "4.9.5",
+    "@rollup/rollup-linux-arm-gnueabihf": "4.9.5",
+    "@rollup/rollup-linux-arm64-gnu": "4.9.5",
+    "@rollup/rollup-linux-arm64-musl": "4.9.5",
+    "@rollup/rollup-linux-x64-gnu": "4.9.5",
+    "@rollup/rollup-linux-x64-musl": "4.9.5",
+    "@rollup/rollup-win32-arm64-msvc": "4.9.5",
+    "@rollup/rollup-win32-ia32-msvc": "4.9.5",
+    "@rollup/rollup-win32-x64-msvc": "4.9.5"
   }
 }

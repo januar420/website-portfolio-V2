@@ -35,23 +35,40 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       
-      - name: Install dependencies
-        run: npm ci
+      - name: Create .npmrc
+        run: |
+          echo "legacy-peer-deps=true" > .npmrc
+          echo "ignore-platform=true" >> .npmrc
+          echo "omit=optional" >> .npmrc
+          echo "strict-peer-dependencies=false" >> .npmrc
+          echo "auto-install-peers=true" >> .npmrc
+          cat .npmrc
       
       - name: Apply Promise.withResolvers polyfill globally
         run: |
           echo "Applying Promise.withResolvers polyfill..."
           node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
       
+      - name: Install dependencies
+        run: npm ci --ignore-platform --no-optional
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096 --no-warnings"
+      
+      - name: Fix platform-specific dependencies
+        run: node scripts/platform-fix.js
+      
       - name: Patch dependency files
-        run: |
-          npm run pre-build
+        run: npm run pre-build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096 --no-warnings"
       
       - name: Run linting
         run: npm run lint || echo "Linting completed with warnings"
       
       - name: Build for testing
         run: npm run build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096 --no-warnings"
       
       - name: Cache build artifacts
         uses: actions/cache@v3
@@ -79,13 +96,26 @@ jobs:
           node-version: 18.x
           cache: 'npm'
       
-      - name: Install dependencies
-        run: npm ci
+      - name: Create .npmrc
+        run: |
+          echo "legacy-peer-deps=true" > .npmrc
+          echo "ignore-platform=true" >> .npmrc
+          echo "omit=optional" >> .npmrc
+          echo "strict-peer-dependencies=false" >> .npmrc
+          echo "auto-install-peers=true" >> .npmrc
       
       - name: Apply Promise.withResolvers polyfill globally
         run: |
           echo "Applying Promise.withResolvers polyfill for deployment..."
           node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
+      
+      - name: Install dependencies 
+        run: npm ci --ignore-platform --no-optional
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096 --no-warnings"
+      
+      - name: Fix platform-specific dependencies
+        run: node scripts/platform-fix.js
       
       - name: Restore cached build
         uses: actions/cache@v3
@@ -99,7 +129,7 @@ jobs:
       - name: Prepare for Netlify
         run: npm run fix-netlify
         env:
-          NODE_OPTIONS: "--no-warnings"
+          NODE_OPTIONS: "--max_old_space_size=4096 --no-warnings"
           NETLIFY: 'true'
           DEPLOY_TARGET: 'netlify'
       
@@ -133,13 +163,26 @@ jobs:
           node-version: 18.x
           cache: 'npm'
       
-      - name: Install dependencies
-        run: npm ci
+      - name: Create .npmrc
+        run: |
+          echo "legacy-peer-deps=true" > .npmrc
+          echo "ignore-platform=true" >> .npmrc
+          echo "omit=optional" >> .npmrc
+          echo "strict-peer-dependencies=false" >> .npmrc
+          echo "auto-install-peers=true" >> .npmrc
       
       - name: Apply Promise.withResolvers polyfill globally
         run: |
           echo "Applying Promise.withResolvers polyfill for GitHub Pages..."
           node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
+      
+      - name: Install dependencies
+        run: npm ci --ignore-platform --no-optional
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096 --no-warnings"
+      
+      - name: Fix platform-specific dependencies
+        run: node scripts/platform-fix.js
       
       - name: Restore cached build
         uses: actions/cache@v3
@@ -153,7 +196,7 @@ jobs:
       - name: Build for GitHub Pages
         run: npm run export:gh-pages
         env:
-          NODE_OPTIONS: "--no-warnings"
+          NODE_OPTIONS: "--max_old_space_size=4096 --no-warnings"
           DEPLOY_TARGET: 'gh-pages'
       
       - name: Prepare for GitHub Pages
