@@ -28,6 +28,11 @@ const log = {
   }
 };
 
+// Fungsi tambahan untuk log.yellow
+log.yellow = (msg) => console.log('🟡 ' + msg);
+log.green = (msg) => console.log('✅ ' + msg);
+log.red = (msg) => console.log('❌ ' + msg);
+
 // Fungsi untuk menjalankan perintah dan log output
 function runCommand(command, description) {
   log.blue(`🚀 ${description}...`);
@@ -95,7 +100,7 @@ const steps = [
     description: 'Memvalidasi output Netlify'
   },
   {
-    command: 'npx netlify deploy --prod --dir=out',
+    command: 'npx netlify deploy --prod --dir=out --site=05986322-27d2-402a-a2cc-ec8c52d44aeb',
     description: 'Men-deploy ke Netlify'
   }
 ];
