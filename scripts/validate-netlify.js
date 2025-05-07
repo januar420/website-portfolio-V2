@@ -1,134 +1,165 @@
 /**
- * Script untuk memvalidasi konfigurasi Netlify sebelum deployment
- * 
- * Script ini akan:
- * 1. Memastikan file _redirects ada dan valid
- * 2. Memastikan netlify.toml ada dan berisi konfigurasi yang benar
- * 3. Memastikan semua file polyfill dan worker sudah benar
+ * Script untuk memvalidasi output Next.js untuk deployment ke Netlify
+ * Ini memeriksa file-file yang diperlukan dan konfigurasi yang benar
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Helper untuk output berwarna
-const colors = {
-  green: (text) => `✅ ${text}`,
-  red: (text) => `❌ ${text}`,
-  yellow: (text) => `⚠️ ${text}`
-};
-
-const OUT_DIR = path.join(process.cwd(), 'out');
-
-function validateRedirects() {
-  const redirectsPath = path.join(OUT_DIR, '_redirects');
+// Fungsi untuk log dengan warna berbeda
+function log(message, type = 'info') {
+  const colors = {
+    info: '\x1b[34m', // biru
+    success: '\x1b[32m', // hijau
+    warning: '\x1b[33m', // kuning
+    error: '\x1b[31m', // merah
+    reset: '\x1b[0m'
+  };
   
-  // Selalu buat ulang file _redirects dengan konten yang lengkap
-  const redirectsContent = 
-    `# Redirects untuk Next.js SPA
-/* /index.html 200!
-/_next/* /_next/:splat 200
-
-# Protect API routes
-/api/* /404.html 404`;
+  const prefix = {
+    info: 'ℹ️',
+    success: '✅',
+    warning: '⚠️',
+    error: '❌'
+  };
   
-  try {
-    fs.writeFileSync(redirectsPath, redirectsContent, { encoding: 'ascii' });
-    console.log(colors.green('File _redirects berhasil dibuat ulang dengan direktif lengkap!'));
-    
-    // Untuk keamanan, periksa isi file setelah ditulis
-    const fileContent = fs.readFileSync(redirectsPath, 'utf8');
-    if (
-      fileContent.includes('/* /index.html 200!') && 
-      fileContent.includes('/_next/*') && 
-      fileContent.includes('/api/* /404.html 404')
-    ) {
-      console.log(colors.green('Verifikasi konten _redirects: Semua direktif penting ada!'));
-      return true;
-    } else {
-      console.warn(colors.yellow('File _redirects berhasil dibuat tetapi mungkin tidak lengkap!'));
-      return false;
-    }
-  } catch (error) {
-    console.error(colors.red(`Gagal membuat file _redirects: ${error.message}`));
-    return false;
-  }
+  console.log(`${colors[type]}${prefix[type]} ${message}${colors.reset}`);
 }
 
-function validatePolyfills() {
-  const promisePolyfillPath = path.join(OUT_DIR, 'promise-polyfill.js');
-  const pdfWorkerWrapperPath = path.join(OUT_DIR, 'pdf-worker-wrapper.js');
-  
-  let success = true;
-  
-  // Cek promise-polyfill.js
-  if (!fs.existsSync(promisePolyfillPath)) {
-    console.error(colors.red('File promise-polyfill.js tidak ditemukan!'));
-    success = false;
+// Direktori output
+const outputDir = path.join(__dirname, '..', 'out');
+
+log('Memulai validasi output Next.js untuk deployment Netlify...', 'info');
+
+// 1. Periksa apakah direktori output ada
+if (!fs.existsSync(outputDir)) {
+  log('Direktori output tidak ditemukan!', 'error');
+  log('Jalankan `next build` terlebih dahulu', 'info');
+  process.exit(1);
+}
+
+// 2. Periksa file-file penting
+const requiredFiles = [
+  'index.html',
+  '_redirects',
+  '_headers',
+  'promise-polyfill.js'
+];
+
+const missingFiles = [];
+
+for (const file of requiredFiles) {
+  const filePath = path.join(outputDir, file);
+  if (!fs.existsSync(filePath)) {
+    missingFiles.push(file);
+    log(`File ${file} tidak ditemukan di direktori output`, 'error');
   } else {
-    console.log(colors.green('File promise-polyfill.js ditemukan!'));
+    log(`File ${file} ditemukan`, 'success');
   }
+}
+
+if (missingFiles.length > 0) {
+  log('Ada file penting yang hilang! Jalankan `npm run prepare-netlify` untuk memperbaiki', 'warning');
+} else {
+  log('Semua file penting ditemukan', 'success');
+}
+
+// 3. Periksa isi file _redirects
+const redirectsPath = path.join(outputDir, '_redirects');
+if (fs.existsSync(redirectsPath)) {
+  const redirectsContent = fs.readFileSync(redirectsPath, 'utf8');
   
-  // Cek pdf-worker-wrapper.js
-  if (!fs.existsSync(pdfWorkerWrapperPath)) {
-    console.error(colors.red('File pdf-worker-wrapper.js tidak ditemukan!'));
-    success = false;
+  // Periksa apakah ada rute SPA fallback
+  if (!redirectsContent.includes('/* /index.html') && !redirectsContent.includes('/*  /index.html')) {
+    log('File _redirects tidak memiliki rute SPA fallback (/* /index.html)', 'warning');
+    log('Ini diperlukan untuk routing klien di Netlify', 'info');
   } else {
-    console.log(colors.green('File pdf-worker-wrapper.js ditemukan!'));
+    log('File _redirects memiliki rute SPA fallback yang benar', 'success');
   }
   
-  return success;
-}
-
-function validateNetlifyToml() {
-  const netlifyTomlPath = path.join(process.cwd(), 'netlify.toml');
-  
-  if (!fs.existsSync(netlifyTomlPath)) {
-    console.error(colors.red('File netlify.toml tidak ditemukan!'));
-    return false;
-  }
-  
-  console.log(colors.green('File netlify.toml ditemukan!'));
-  
-  // Validasi konten netlify.toml (basic check)
-  const content = fs.readFileSync(netlifyTomlPath, 'utf8');
-  
-  if (!content.includes('[build]') || !content.includes('publish = "out"')) {
-    console.error(colors.red('netlify.toml tidak berisi konfigurasi build yang benar!'));
-    return false;
-  }
-  
-  if (!content.includes('[[redirects]]') || !content.includes('from = "/*"') || !content.includes('to = "/index.html"')) {
-    console.warn(colors.yellow('netlify.toml mungkin tidak berisi konfigurasi redirects yang diperlukan untuk SPA'));
-  }
-  
-  return true;
-}
-
-function main() {
-  console.log(colors.green('=== Validasi Konfigurasi Netlify ==='));
-  
-  // Pastikan folder out ada
-  if (!fs.existsSync(OUT_DIR)) {
-    console.error(colors.red('Folder "out" tidak ditemukan! Jalankan build terlebih dahulu.'));
-    process.exit(1);
-  }
-  
-  const redirectsValid = validateRedirects();
-  const polyfillsValid = validatePolyfills();
-  const netlifyTomlValid = validateNetlifyToml();
-  
-  console.log('\n=== Hasil Validasi ===');
-  console.log(`_redirects: ${redirectsValid ? colors.green('✓ Valid') : colors.red('✗ Invalid')}`);
-  console.log(`Polyfills: ${polyfillsValid ? colors.green('✓ Valid') : colors.red('✗ Invalid')}`);
-  console.log(`netlify.toml: ${netlifyTomlValid ? colors.green('✓ Valid') : colors.red('✗ Invalid')}`);
-  
-  if (redirectsValid && polyfillsValid && netlifyTomlValid) {
-    console.log(colors.green('\n✅ Semua validasi berhasil! Siap untuk deployment.'));
-    process.exit(0);
+  // Periksa apakah ada rute untuk asset statis
+  if (!redirectsContent.includes('/_next/static/')) {
+    log('File _redirects tidak memiliki rute untuk asset statis (/_next/static/)', 'warning');
+    log('Ini diperlukan untuk loading asset statis dengan benar', 'info');
   } else {
-    console.error(colors.red('\n❌ Beberapa validasi gagal! Perbaiki masalah sebelum melakukan deployment.'));
-    process.exit(1);
+    log('File _redirects memiliki rute untuk asset statis', 'success');
   }
+} else {
+  log('File _redirects tidak ada, tidak dapat memeriksa rute', 'warning');
 }
 
-main(); 
+// 4. Periksa isi file index.html untuk polyfill Promise.withResolvers
+const indexPath = path.join(outputDir, 'index.html');
+if (fs.existsSync(indexPath)) {
+  const indexContent = fs.readFileSync(indexPath, 'utf8');
+  
+  if (!indexContent.includes('promise-polyfill.js')) {
+    log('File index.html tidak memiliki referensi ke promise-polyfill.js', 'warning');
+    log('Ini diperlukan untuk kompatibilitas Promise.withResolvers', 'info');
+  } else {
+    log('File index.html memiliki referensi ke promise-polyfill.js', 'success');
+  }
+  
+  // Periksa apakah ada Next.js Data Scripts
+  if (!indexContent.includes('__NEXT_DATA__')) {
+    log('File index.html tidak memiliki __NEXT_DATA__', 'warning');
+    log('Ini mungkin berarti Next.js tidak dikonfigurasi dengan benar untuk export statis', 'info');
+  } else {
+    log('File index.html memiliki __NEXT_DATA__ yang benar', 'success');
+  }
+} else {
+  log('File index.html tidak ada, tidak dapat memeriksa isi', 'warning');
+}
+
+// 5. Periksa file netlify.toml
+const netlifyTomlPath = path.join(__dirname, '..', 'netlify.toml');
+if (fs.existsSync(netlifyTomlPath)) {
+  const netlifyTomlContent = fs.readFileSync(netlifyTomlPath, 'utf8');
+  
+  // Periksa publish directory
+  if (!netlifyTomlContent.includes('publish = "out"')) {
+    log('netlify.toml tidak memiliki pengaturan publish = "out"', 'warning');
+    log('Ini diperlukan untuk menentukan direktori yang akan di-deploy', 'info');
+  } else {
+    log('netlify.toml memiliki pengaturan publish directory yang benar', 'success');
+  }
+  
+  // Periksa build command
+  if (!netlifyTomlContent.includes('command = "npm run')) {
+    log('netlify.toml tidak memiliki perintah build yang benar', 'warning');
+    log('Ini diperlukan untuk menentukan cara membangun proyek', 'info');
+  } else {
+    log('netlify.toml memiliki build command yang benar', 'success');
+  }
+  
+  // Periksa header settings
+  if (!netlifyTomlContent.includes('[[headers]]')) {
+    log('netlify.toml tidak memiliki konfigurasi headers', 'warning');
+    log('Ini diperlukan untuk mengoptimalkan caching dan keamanan', 'info');
+  } else {
+    log('netlify.toml memiliki konfigurasi headers', 'success');
+  }
+} else {
+  log('File netlify.toml tidak ditemukan!', 'error');
+  log('Ini diperlukan untuk konfigurasi deployment Netlify', 'info');
+}
+
+// 6. Ringkasan hasil
+console.log('\n----- RINGKASAN VALIDASI -----');
+
+if (missingFiles.length === 0) {
+  log('✓ Semua file penting ada', 'success');
+} else {
+  log(`✗ Ada ${missingFiles.length} file penting yang hilang`, 'error');
+}
+
+if (missingFiles.length > 0) {
+  log('\nUntuk memperbaiki masalah ini, jalankan:', 'info');
+  log('npm run prepare-netlify', 'info');
+  
+  process.exit(1);
+} else {
+  log('\nProyek siap untuk di-deploy ke Netlify!', 'success');
+  log('Untuk men-deploy, jalankan:', 'info');
+  log('npm run deploy:netlify', 'info');
+} 

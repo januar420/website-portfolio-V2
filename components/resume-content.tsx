@@ -38,6 +38,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DownloadCVButton from "./download-cv-button"
 import { useLanguage } from "./language-provider"
 import { useRouter } from "next/navigation"
+import LinuxTerminal from "./linux-terminal"
+import TerminalTypingEffect from "./terminal-typing-effect"
+import { useI18n } from "./i18n/context"
 
 // Function untuk menghasilkan gambar abstrak yang berbeda-beda - disederhanakan
 function generateAbstractBackgroundImage(width = 1200, height = 600, seed = Math.random() * 1000) {
@@ -75,17 +78,20 @@ function generateAbstractBackgroundImage(width = 1200, height = 600, seed = Math
 }
 
 export default function ResumeContent() {
-  const { t } = useLanguage()
+  const { t: languageT } = useLanguage()
+  const { t } = useI18n()
   const bioRef = useRef(null)
   const skillsRef = useRef(null)
   const experienceRef = useRef(null)
   const educationRef = useRef(null)
+  const terminalRef = useRef(null)
   const router = useRouter()
 
   const bioInView = useInView(bioRef, { once: true, amount: 0.3 })
   const skillsInView = useInView(skillsRef, { once: true, amount: 0.3 })
   const experienceInView = useInView(experienceRef, { once: true, amount: 0.3 })
   const educationInView = useInView(educationRef, { once: true, amount: 0.3 })
+  const terminalInView = useInView(terminalRef, { once: true, amount: 0.3 })
 
   const [expandedJob, setExpandedJob] = useState<number | null>(null)
   const [scrollY, setScrollY] = useState(0)
@@ -97,6 +103,8 @@ export default function ResumeContent() {
   const [showJobDetails, setShowJobDetails] = useState<boolean[]>([])
   const detailsRef = useRef<(HTMLDivElement | null)[]>([])
   const animationRef = useRef<number>(0)
+  // Tambahkan state untuk floating terminal
+  const [showFloatingTerminal, setShowFloatingTerminal] = useState(false)
 
   // Function untuk memilih gambar header secara acak
   useEffect(() => {
@@ -826,274 +834,19 @@ export default function ResumeContent() {
         </div>
       </motion.div>
 
-      {/* Skills Section with 3D Tabs */}
+      {/* Terminal Linux Section */}
       <motion.div
-        ref={skillsRef}
+        ref={terminalRef}
         initial={{ opacity: 0, y: 30 }}
-        animate={skillsInView ? { opacity: 1, y: 0 } : {}}
+        animate={terminalInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.8 }}
         className="mb-24"
       >
         <div className="flex items-center mb-12">
           <div className="h-px flex-grow bg-gradient-to-r from-transparent to-primary/50"></div>
           <h2 className="text-3xl md:text-4xl font-bold mx-6 flex items-center">
-            <Code className="h-8 w-8 mr-3 text-primary" />
-            Technical Expertise
-          </h2>
-          <div className="h-px flex-grow bg-gradient-to-l from-transparent to-primary/50"></div>
-        </div>
-
-        <Tabs defaultValue="technical" className="w-full">
-          <TabsList className="w-full max-w-md mx-auto mb-8 bg-card/30 backdrop-blur-md border border-card/20 p-1 rounded-full">
-            <TabsTrigger
-              value="technical"
-              className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <Server className="h-4 w-4 mr-2" />
-              Technical Skills
-            </TabsTrigger>
-            <TabsTrigger
-              value="additional"
-              className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <Cpu className="h-4 w-4 mr-2" />
-              Additional Skills
-            </TabsTrigger>
-            <TabsTrigger
-              value="soft"
-              className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <Lightbulb className="h-4 w-4 mr-2" />
-              Soft Skills
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="technical" className="mt-0">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
-              <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-8 rounded-xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                  {technicalSkills.map((skill, index) => (
-                    <motion.div
-                      key={skill.name}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={skillsInView ? { opacity: 1, x: 0 } : {}}
-                      transition={{ duration: 0.5, delay: 0.1 * index }}
-                      className="group motion-div"
-                    >
-                      <div className="flex items-center mb-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="p-3 bg-primary/10 rounded-lg mr-4 group-hover:bg-primary/20 transition-all duration-300 transform group-hover:scale-110">
-                                <skill.icon className="h-5 w-5 text-primary" />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{skill.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <span className="font-medium text-lg">{skill.name}</span>
-                      </div>
-                      <div className="h-3 bg-foreground/10 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-primary to-primary-foreground"
-                          initial={{ width: 0 }}
-                          animate={skillsInView ? { width: `${skill.level}%` } : {}}
-                          transition={{ duration: 1, delay: 0.2 + 0.1 * index }}
-                        />
-                      </div>
-                      <div className="flex justify-between mt-1 text-xs text-foreground/60">
-                        <span>Beginner</span>
-                        <span>Advanced</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="additional" className="mt-0">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
-              <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-8 rounded-xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                  {additionalSkills.map((skill, index) => (
-                    <motion.div
-                      key={skill.name}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={skillsInView ? { opacity: 1, x: 0 } : {}}
-                      transition={{ duration: 0.5, delay: 0.1 * index }}
-                      className="group motion-div"
-                    >
-                      <div className="flex items-center mb-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="p-3 bg-primary/10 rounded-lg mr-4 group-hover:bg-primary/20 transition-all duration-300 transform group-hover:scale-110">
-                                <skill.icon className="h-5 w-5 text-primary" />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{skill.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <span className="font-medium text-lg">{skill.name}</span>
-                      </div>
-                      <div className="h-3 bg-foreground/10 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-primary to-primary-foreground"
-                          initial={{ width: 0 }}
-                          animate={skillsInView ? { width: `${skill.level}%` } : {}}
-                          transition={{ duration: 1, delay: 0.2 + 0.1 * index }}
-                        />
-                      </div>
-                      <div className="flex justify-between mt-1 text-xs text-foreground/60">
-                        <span>Beginner</span>
-                        <span>Advanced</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="soft" className="mt-0">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
-              <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-8 rounded-xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-6 flex items-center">
-                      <Briefcase className="h-5 w-5 mr-3 text-primary" />
-                      Administrative & Managerial
-                    </h3>
-                    <ul className="space-y-4">
-                      <li className="flex items-start">
-                        <div className="p-1 bg-primary/10 rounded-full mr-3 mt-1">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        </div>
-                        <span className="text-foreground/80">Negosiasi dan pengelolaan dokumen</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="p-1 bg-primary/10 rounded-full mr-3 mt-1">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        </div>
-                        <span className="text-foreground/80">Optimalisasi proses kerja melalui solusi digital</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="p-1 bg-primary/10 rounded-full mr-3 mt-1">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        </div>
-                        <span className="text-foreground/80">Manajemen waktu dan prioritas</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="p-1 bg-primary/10 rounded-full mr-3 mt-1">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        </div>
-                        <span className="text-foreground/80">Koordinasi tim dan komunikasi efektif</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xl font-semibold mb-6 flex items-center">
-                      <Lightbulb className="h-5 w-5 mr-3 text-primary" />
-                      Adaptability & Self-Learning
-                    </h3>
-                    <ul className="space-y-4">
-                      <li className="flex items-start">
-                        <div className="p-1 bg-primary/10 rounded-full mr-3 mt-1">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        </div>
-                        <span className="text-foreground/80">Cepat belajar dan menguasai teknologi baru</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="p-1 bg-primary/10 rounded-full mr-3 mt-1">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        </div>
-                        <span className="text-foreground/80">
-                          Partisipasi aktif dalam kursus online dan pelatihan IT
-                        </span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="p-1 bg-primary/10 rounded-full mr-3 mt-1">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        </div>
-                        <span className="text-foreground/80">Kemampuan beradaptasi dengan lingkungan kerja baru</span>
-                      </li>
-                      <li className="flex items-start">
-                        <div className="p-1 bg-primary/10 rounded-full mr-3 mt-1">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        </div>
-                        <span className="text-foreground/80">Pemecahan masalah dan berpikir analitis</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="mt-12">
-                  <h3 className="text-xl font-semibold mb-6 flex items-center">
-                    <Languages className="h-5 w-5 mr-3 text-primary" />
-                    Languages
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                    <div>
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium">Bahasa Indonesia</span>
-                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">Native</span>
-                      </div>
-                      <div className="h-3 bg-foreground/10 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-primary to-primary-foreground"
-                          initial={{ width: 0 }}
-                          animate={skillsInView ? { width: "100%" } : {}}
-                          transition={{ duration: 1, delay: 0.8 }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium">English</span>
-                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
-                          Intermediate
-                        </span>
-                      </div>
-                      <div className="h-3 bg-foreground/10 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-primary to-primary-foreground"
-                          initial={{ width: 0 }}
-                          animate={skillsInView ? { width: "65%" } : {}}
-                          transition={{ duration: 1, delay: 0.9 }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </motion.div>
-
-      {/* Experience Section with Interactive Cards */}
-      <motion.div
-        ref={experienceRef}
-        initial={{ opacity: 0, y: 30 }}
-        animate={experienceInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.8 }}
-        className="mb-24"
-      >
-        <div className="flex items-center mb-12">
-          <div className="h-px flex-grow bg-gradient-to-r from-transparent to-primary/50"></div>
-          <h2 className="text-3xl md:text-4xl font-bold mx-6 flex items-center">
-            <Briefcase className="h-8 w-8 mr-3 text-primary" />
-            Professional Journey
+            <Terminal className="h-8 w-8 mr-3 text-primary" />
+            Linux Terminal
           </h2>
           <div className="h-px flex-grow bg-gradient-to-l from-transparent to-primary/50"></div>
         </div>
@@ -1101,277 +854,52 @@ export default function ResumeContent() {
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
           <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-8 rounded-xl">
-            <div className="relative border-l-2 border-primary/30 pl-8 ml-4">
-              {workExperience.map((job, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={experienceInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.2 * index }}
-                  className="mb-12 relative last:mb-0 motion-div"
-                >
-                  <div className="absolute -left-[41px] top-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center shadow-lg">
-                    <div className="w-3 h-3 rounded-full bg-background"></div>
-                  </div>
-
-                  <div className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:bg-card/60">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                      <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground">
-                        {job.position}
-                      </h3>
-                      <div className="flex items-center mt-2 md:mt-0">
-                        <Clock className="h-4 w-4 text-primary mr-2" />
-                        <span className="text-sm text-foreground/70 bg-primary/10 px-3 py-1 rounded-full inline-block">
-                          {job.period}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center mb-6">
-                      <span className="font-semibold text-lg text-primary">{job.company}</span>
-                      <span className="mx-2 text-foreground/40">•</span>
-                      <span className="text-foreground/70 flex items-center">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {job.location}
-                      </span>
-                    </div>
-
-                    <div className="mb-4">
-                      <h4 className="text-sm uppercase tracking-wider text-foreground/60 mb-2 flex items-center">
-                        <div className="w-4 h-0.5 bg-primary/50 mr-2"></div>
-                        Responsibilities
-                      </h4>
-                      <ul className="space-y-2 pl-5">
-                        {job.responsibilities.map((responsibility, idx) => (
-                          <li key={idx} className="text-foreground/80 relative">
-                            <div className="absolute -left-5 top-2.5 w-1.5 h-1.5 rounded-full bg-primary/70"></div>
-                            {responsibility}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary hover:text-primary hover:bg-primary/10"
-                        onClick={() => toggleJobDetails(index)}
-                      >
-                        {expandedJob === index ? (
-                          <>
-                            <span>Less Details</span>
-                            <ChevronUp className="ml-1 h-4 w-4" />
-                          </>
-                        ) : (
-                          <>
-                            <span>More Details</span>
-                            <ChevronDown className="ml-1 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    <AnimatePresence>
-                      {expandedJob === index && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="pt-4 border-t border-[hsl(var(--border)_/_0.3)] mt-4">
-                            <div className="mb-4">
-                              <h4 className="text-sm uppercase tracking-wider text-foreground/60 mb-2 flex items-center">
-                                <Award className="h-4 w-4 mr-2 text-primary" />
-                                Key Achievements
-                              </h4>
-                              <ul className="space-y-2 pl-5">
-                                {job.achievements.map((achievement, idx) => (
-                                  <li key={idx} className="text-foreground/80 relative">
-                                    <div className="absolute -left-5 top-2.5 w-1.5 h-1.5 rounded-full bg-primary/70"></div>
-                                    {achievement}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            <div>
-                              <h4 className="text-sm uppercase tracking-wider text-foreground/60 mb-2 flex items-center">
-                                <Code className="h-4 w-4 mr-2 text-primary" />
-                                Tools & Technologies
-                              </h4>
-                              <div className="flex flex-wrap gap-2">
-                                {job.tools.map((tool, idx) => (
-                                  <span key={idx} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
-                                    {tool}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </motion.div>
-              ))}
+            <div className="prose max-w-none prose-zinc dark:prose-invert mb-8">
+              <p className="text-lg text-center mb-2">
+                Saya memiliki keahlian dalam menggunakan dan mengonfigurasi sistem operasi Linux.
+              </p>
+              <p className="text-base text-center mb-8">
+                Sebagai IT Support dan Linux enthusiast, saya dapat mengimplementasikan, mengonfigurasi, dan mengamankan server Linux. 
+                Keahlian ini meliputi administrasi server, keamanan jaringan, dan otomatisasi tugas menggunakan skrip bash.
+              </p>
             </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Education & Projects Section - Enhanced for mobile */}
-      <motion.div
-        ref={educationRef}
-        initial={{ opacity: isMobile ? 1 : 0, y: isMobile ? 0 : 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="mb-24 sm:mb-16"
-        data-section="education"
-        id="education-section"
-      >
-        <div className="flex items-center mb-12 sm:mb-8">
-          <div className="h-px flex-grow bg-gradient-to-r from-transparent to-primary/50"></div>
-          <h2 className="text-3xl md:text-4xl font-bold mx-6 flex flex-wrap items-center">
-            <GraduationCap className="h-8 w-8 mr-3 text-primary flex-shrink-0" />
-            <span className="whitespace-nowrap">Education & Projects</span>
-          </h2>
-          <div className="h-px flex-grow bg-gradient-to-l from-transparent to-primary/50"></div>
-        </div>
-
-        {/* Grid yang dioptimalkan untuk mobile - ubah layout menjadi 1 kolom di mobile dengan spacing lebih pendek */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-6">
-          {/* Education & Certifications - Diberi masing-masing ID untuk memudahkan akses DOM */}
-          <div className="relative h-full min-h-[200px]" id="education-col">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
-            <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-4 sm:p-8 rounded-xl h-full">
-              <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 flex items-center">
-                <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
-                <span className="break-words">Education & Certifications</span>
-              </h3>
-
-              {/* Education items dengan struktur yang dioptimalkan */}
-              <div className="relative border-l-2 border-primary/30 pl-4 sm:pl-6 ml-2 sm:ml-3 mb-8 sm:mb-12">
-                {education.map((edu, index) => (
-                  <div
-                    key={index}
-                    className="mb-6 sm:mb-8 relative last:mb-0 motion-div mobile-visible opacity-100"
-                    style={{ transform: 'none' }}
-                    id={`education-item-${index}`}
-                  >
-                    <div className="absolute -left-[25px] sm:-left-[29px] top-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center">
-                      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-background"></div>
-                    </div>
-
-                    <div className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-3 sm:p-4 hover:shadow-lg transition-all duration-300">
-                      <h4 className="text-lg sm:text-xl font-bold">{edu.institution}</h4>
-                      <div className="text-xs sm:text-sm text-foreground/70 mb-1 sm:mb-2 flex items-center">
-                        <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
-                        {edu.period}
-                      </div>
-                      {edu.details && <p className="text-sm sm:text-base text-foreground/80">{edu.details}</p>}
-                    </div>
-                  </div>
-                ))}
+            
+            <div className="bg-zinc-900/30 backdrop-blur-md border border-zinc-800/30 rounded-lg p-4 mb-8">
+              <div className="flex items-center mb-4">
+                <Terminal className="h-5 w-5 text-primary mr-2" />
+                <h3 className="text-xl font-semibold">Terminal Interaktif</h3>
               </div>
-
-              {/* Certifications dengan rendereing yang dioptimalkan */}
-              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center">
-                <Award className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
-                <span className="break-words">Certifications</span>
-              </h3>
-
-              <div className="space-y-3 sm:space-y-4" id="certifications-container">
-                {certifications.map((cert, index) => (
-                  <div
-                    key={index}
-                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-3 sm:p-4 hover:shadow-lg transition-all duration-300 motion-div mobile-visible opacity-100"
-                    style={{ transform: 'none' }}
-                    id={`certification-item-${index}`}
-                  >
-                    <div className="flex flex-wrap justify-between items-start gap-2">
-                      <h4 className="font-semibold text-sm sm:text-base">{cert.name}</h4>
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{cert.date}</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-foreground/70 mt-1">{cert.issuer}</p>
-                    <p className="text-xs sm:text-sm mt-2">{cert.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Projects & Achievements - Dengan rendering yang dioptimalkan */}
-          <div className="relative h-full min-h-[200px]" id="projects-col">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-foreground/10 rounded-xl blur-xl"></div>
-            <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-4 sm:p-8 rounded-xl h-full">
-              <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 flex items-center">
-                <Code className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
-                <span className="break-words">Projects & Achievements</span>
-              </h3>
-
-              {/* Projects dengan rendering statis untuk mobile */}
-              <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-12" id="projects-container">
-                {projects.map((project, index) => (
-                  <div
-                    key={index}
-                    className="bg-card/40 backdrop-blur-sm border border-card/30 rounded-lg p-4 sm:p-6 hover:shadow-xl transition-all duration-300 group motion-div mobile-visible opacity-100"
-                    style={{ transform: 'none' }}
-                    id={`project-item-${index}`}
-                  >
-                    <div className="flex flex-wrap justify-between items-start gap-2 mb-2 sm:mb-3">
-                      <h4 className="text-lg sm:text-xl font-bold group-hover:text-primary transition-colors">{project.name}</h4>
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                        {project.date}
-                      </span>
-                    </div>
-                    <p className="text-sm sm:text-base text-foreground/80 mb-3 sm:mb-4">{project.description}</p>
-                    <div className="flex flex-wrap gap-1 sm:gap-2">
-                      {project.technologies.map((tech, idx) => (
-                        <span key={idx} className="bg-primary/10 text-primary px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm">
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Self Development items - rendering statis untuk performa */}
-              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center">
-                <Lightbulb className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-primary flex-shrink-0" />
-                <span className="break-words">Self Development</span>
-              </h3>
-
-              <div className="space-y-4 sm:space-y-6 motion-div mobile-visible opacity-100" style={{ transform: 'none' }} id="self-dev-container">
-                <div className="p-3 sm:p-5 bg-primary/5 rounded-lg border border-primary/10 hover:shadow-lg transition-all duration-300 hover:bg-primary/10">
-                  <h4 className="font-medium mb-1 sm:mb-2 flex items-center">
-                    <Terminal className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary flex-shrink-0" />
-                    Linux Mastery
-                  </h4>
-                  <p className="text-sm sm:text-base text-foreground/80">
-                    Secara konsisten memperdalam pengetahuan tentang administrasi Linux dan konfigurasi server melalui praktik langsung dan proyek personal
-                  </p>
+              <p className="text-sm mb-4">
+                Berikut adalah terminal Linux interaktif yang menunjukkan keterampilan dan pengalaman saya.
+                Silakan mencoba beberapa perintah berikut:
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                <div className="bg-zinc-800/50 rounded px-3 py-2 text-center">
+                  <code className="text-green-400">about</code>
                 </div>
-
-                <div className="p-3 sm:p-5 bg-primary/5 rounded-lg border border-primary/10 hover:shadow-lg transition-all duration-300 hover:bg-primary/10">
-                  <h4 className="font-medium mb-1 sm:mb-2 flex items-center">
-                    <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary flex-shrink-0" />
-                    Keamanan Siber
-                  </h4>
-                  <p className="text-sm sm:text-base text-foreground/80">
-                    Terus mempelajari teknik dan praktik terbaru dalam keamanan sistem dan jaringan melalui platform pelatihan online dan komunitas Linux
-                  </p>
+                <div className="bg-zinc-800/50 rounded px-3 py-2 text-center">
+                  <code className="text-green-400">skills</code>
+                </div>
+                <div className="bg-zinc-800/50 rounded px-3 py-2 text-center">
+                  <code className="text-green-400">experience</code>
+                </div>
+                <div className="bg-zinc-800/50 rounded px-3 py-2 text-center">
+                  <code className="text-green-400">help</code>
                 </div>
               </div>
-
-              <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gradient-to-br from-primary/20 to-primary-foreground/20 rounded-lg text-center motion-div mobile-visible opacity-100" style={{ transform: 'none' }} id="quote-container">
-                <p className="italic text-sm sm:text-lg">
-                  "Berkomitmen untuk selalu mengembangkan solusi berbasis Linux yang aman, efisien, dan andal untuk menyelesaikan tantangan teknologi."
-                </p>
-              </div>
+            </div>
+            
+            <LinuxTerminal compact={true} initiallyOpen={true} />
+            
+            {/* Terminal Section with typing effect */}
+            <div className="mt-6">
+              <h3 className="text-xl font-semibold mb-3">Demo Terminal</h3>
+              <TerminalTypingEffect
+                className="w-full"
+                autoStart={true}
+                loop={true}
+                showLanguageSelector={true}
+              />
             </div>
           </div>
         </div>
@@ -1387,9 +915,9 @@ export default function ResumeContent() {
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary-foreground/20 rounded-xl blur-xl"></div>
           <div className="relative bg-card/30 backdrop-blur-md border border-card/20 p-12 rounded-xl text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">{t("resume.readyToCollaborate")}</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">{languageT("resume.readyToCollaborate")}</h2>
             <p className="text-xl text-foreground/80 max-w-2xl mx-auto mb-8">
-              {t("resume.collaborationText")}
+              {languageT("resume.collaborationText")}
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button 
@@ -1426,7 +954,7 @@ export default function ResumeContent() {
                 }}
               >
                 <Mail className="mr-2 h-5 w-5" />
-                {t("resume.contactMe")}
+                {languageT("resume.contactMe")}
               </Button>
               <DownloadCVButton
                 variant="outline"
@@ -1436,6 +964,42 @@ export default function ResumeContent() {
           </div>
         </div>
       </motion.div>
+
+      {/* Floating Terminal */}
+      {!isMobile && (
+        <AnimatePresence>
+          {showFloatingTerminal && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed bottom-0 right-0 z-50 p-4 w-full max-w-3xl h-[60vh]"
+            >
+              <LinuxTerminal 
+                initiallyOpen={true} 
+                showGlowEffect={true}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+
+      {/* Floating Terminal Button - only show if the embedded terminal is not in view */}
+      {!isMobile && !terminalInView && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="fixed bottom-6 right-6 z-40"
+        >
+          <Button 
+            onClick={() => setShowFloatingTerminal(!showFloatingTerminal)}
+            className="rounded-full h-14 w-14 bg-primary/90 text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-xl"
+            size="icon"
+          >
+            <Terminal className="h-6 w-6" />
+          </Button>
+        </motion.div>
+      )}
     </div>
   )
 }

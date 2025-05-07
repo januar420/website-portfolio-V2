@@ -5,6 +5,7 @@ import ScriptWithErrorHandler from "./components/script-with-error-handler"
 import AnalyticsScript from "./components/analytics-script"
 import localFont from "next/font/local"
 import { fontCacheBuster } from "./utils/cache-buster"
+import { Providers } from "./providers"
 
 // Gunakan font lokal daripada diunduh dari Google Fonts
 const inter = localFont({
@@ -70,9 +71,11 @@ export default function RootLayout({
         {/* Patch React Three Fiber sebelum komponen lainnya dimuat */}
         <ScriptWithErrorHandler />
         
-        <ClientLayoutWrapper>
-          {children}
-        </ClientLayoutWrapper>
+        <Providers>
+          <ClientLayoutWrapper>
+            {children}
+          </ClientLayoutWrapper>
+        </Providers>
 
         {/* Analytics */}
         <AnalyticsScript />

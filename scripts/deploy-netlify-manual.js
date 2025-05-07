@@ -1,163 +1,136 @@
 /**
- * Script untuk melakukan deploy manual ke Netlify dengan error handling lebih baik
+ * Script untuk deploy manual ke Netlify
+ * Ini menjalankan semua langkah perbaikan dan deployment secara berurutan
  */
 
 const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const readline = require('readline');
 
-// Direktori output
-const outDir = path.join(__dirname, '..', 'out');
-
-// Dapatkan Site ID dari file state.json atau dari parameter CLI
-const getNetlifySiteId = () => {
-  try {
-    // Coba baca dari state.json
-    const stateFilePath = path.join(__dirname, '..', '.netlify', 'state.json');
-    if (fs.existsSync(stateFilePath)) {
-      const stateContent = fs.readFileSync(stateFilePath, 'utf8');
-      const stateData = JSON.parse(stateContent);
-      if (stateData && stateData.siteId) {
-        return stateData.siteId;
-      }
-    }
-    
-    // Coba baca dari netlify.toml
-    const tomlPath = path.join(__dirname, '..', 'netlify.toml');
-    if (fs.existsSync(tomlPath)) {
-      const tomlContent = fs.readFileSync(tomlPath, 'utf8');
-      const siteIdMatch = tomlContent.match(/ID\s*=\s*"([^"]+)"/);
-      if (siteIdMatch && siteIdMatch[1]) {
-        return siteIdMatch[1];
-      }
-    }
-    
-    // Default ID jika tidak ditemukan
-    return "02a6fa83-7aa8-4d12-9d14-db7279b92914";
-  } catch (error) {
-    console.error('Error mendapatkan Netlify Site ID:', error);
-    return "02a6fa83-7aa8-4d12-9d14-db7279b92914";
+// Fungsi log sederhana tanpa dependensi chalk
+const log = {
+  info: (msg) => console.log('ℹ️ ' + msg),
+  success: (msg) => console.log('✅ ' + msg),
+  warning: (msg) => console.log('⚠️ ' + msg),
+  error: (msg) => console.log('❌ ' + msg),
+  blue: (msg) => console.log('🔵 ' + msg),
+  yellow: (msg) => console.log('🟡 ' + msg),
+  gray: (msg) => console.log('⚪ ' + msg),
+  bold: {
+    blue: (msg) => console.log('🔷 ' + msg),
+    green: (msg) => console.log('✳️ ' + msg),
+    yellow: (msg) => console.log('🟨 ' + msg)
+  },
+  green: {
+    bold: (msg) => console.log('✳️ ' + msg)
+  },
+  yellow: {
+    bold: (msg) => console.log('🟨 ' + msg)
   }
 };
 
-// Verifikasi direktori output
-const checkOutputDirectory = () => {
-  if (!fs.existsSync(outDir)) {
-    console.error('❌ Direktori output tidak ditemukan!');
-    console.log('Jalankan npm run fix-netlify terlebih dahulu...');
-    return false;
-  }
+// Fungsi untuk menjalankan perintah dan log output
+function runCommand(command, description) {
+  log.blue(`🚀 ${description}...`);
+  log.gray(`$ ${command}`);
   
-  // Verifikasi file utama
-  const requiredFiles = ['index.html', '_redirects', 'pdf.worker.min.js'];
-  const missingFiles = requiredFiles.filter(file => !fs.existsSync(path.join(outDir, file)));
-  
-  if (missingFiles.length > 0) {
-    console.error(`❌ File penting tidak ditemukan di direktori output: ${missingFiles.join(', ')}`);
-    console.log('Jalankan npm run fix-netlify terlebih dahulu...');
-    return false;
-  }
-  
-  return true;
-};
-
-// Pastikan file index.html memiliki script yang diperlukan
-const fixIndexHtml = () => {
   try {
-    const indexPath = path.join(outDir, 'index.html');
-    let indexContent = fs.readFileSync(indexPath, 'utf8');
-    
-    // Cek apakah script next-patch.js sudah ada
-    if (!indexContent.includes('next-patch.js')) {
-      console.log('⚒️ Menambahkan next-patch.js ke index.html...');
-      indexContent = indexContent.replace(
-        '<script src="/promise-polyfill.js"></script>',
-        '<script src="/promise-polyfill.js"></script>\n<script src="/next-patch.js"></script>'
-      );
-    }
-    
-    // Pastikan script app/layout dan app/page ada
-    if (!indexContent.includes('app/page')) {
-      console.log('⚒️ Menambahkan script App ke index.html...');
-      const scriptInsertionPoint = '</head>';
-      const appScripts = `
-<!-- Script App -->
-<script src="/_next/static/chunks/app/layout-0efd3b8d8b4e1d38.js"></script>
-<script src="/_next/static/chunks/app/page-81d4eab59fcc134e.js"></script>
-<script src="/_next/static/chunks/main-app-38678ce8b5ac2961.js"></script>
-</head>`;
-      
-      indexContent = indexContent.replace(scriptInsertionPoint, appScripts);
-    }
-    
-    fs.writeFileSync(indexPath, indexContent);
-    console.log('✅ index.html diperbaiki');
+    // Jalankan perintah dan tampilkan output secara langsung
+    execSync(command, { stdio: 'inherit' });
+    log.success(`${description} berhasil`);
     return true;
   } catch (error) {
-    console.error('❌ Error saat memperbaiki index.html:', error);
+    log.error(`${description} gagal: ${error.message}`);
     return false;
   }
-};
+}
 
-// Jalankan deployment
-const runDeployment = (siteId) => {
-  try {
-    console.log('🚀 Memulai deployment ke Netlify...');
+// Fungsi untuk tanya jawab
+function askQuestion(question) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  return new Promise(resolve => {
+    rl.question(question, answer => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+}
+
+// Banner
+log.bold.blue('\n=======================================');
+log.bold.blue('    DEPLOYMENT MANUAL KE NETLIFY');
+log.bold.blue('=======================================\n');
+
+// Urutan langkah deployment
+const steps = [
+  {
+    command: 'npm run clean',
+    description: 'Membersihkan direktori build'
+  },
+  {
+    command: 'node scripts/fix-rollup-deps.js',
+    description: 'Memperbaiki dependensi rollup'
+  },
+  {
+    command: 'node scripts/platform-fix.js',
+    description: 'Memperbaiki masalah platform'
+  },
+  {
+    command: 'node scripts/direct-patching.js',
+    description: 'Menerapkan patching langsung'
+  },
+  {
+    command: 'npm run build:netlify',
+    description: 'Membangun proyek untuk Netlify'
+  },
+  {
+    command: 'node scripts/prepare-netlify.js',
+    description: 'Menyiapkan output untuk Netlify'
+  },
+  {
+    command: 'node scripts/validate-netlify.js',
+    description: 'Memvalidasi output Netlify'
+  },
+  {
+    command: 'npx netlify deploy --prod --dir=out',
+    description: 'Men-deploy ke Netlify'
+  }
+];
+
+// Jalankan langkah-langkah secara berurutan
+async function main() {
+  let success = true;
+  
+  for (let i = 0; i < steps.length; i++) {
+    const { command, description } = steps[i];
     
-    const deployCommand = `npx netlify deploy --prod --dir=out --site=${siteId}`;
-    console.log(`Menjalankan: ${deployCommand}`);
+    log.yellow(`\nLangkah ${i+1}/${steps.length}: ${description}`);
     
-    // Jalankan perintah deployment
-    execSync(deployCommand, { stdio: 'inherit' });
-    
-    console.log('\n✅ Deployment berhasil!');
-    return true;
-  } catch (error) {
-    console.error('❌ Error saat deployment:', error.message);
-    
-    // Mencoba fallback dengan perintah sederhana
-    try {
-      console.log('\n⚠️ Mencoba dengan perintah alternatif...');
-      execSync(`npx netlify deploy --prod --dir=out`, { stdio: 'inherit' });
-      console.log('\n✅ Deployment berhasil dengan metode alternatif!');
-      return true;
-    } catch (fallbackError) {
-      console.error('❌ Deployment gagal dengan semua metode:', fallbackError.message);
+    const stepSuccess = runCommand(command, description);
+    if (!stepSuccess) {
+      success = false;
       
-      // Saran untuk pengguna
-      console.log('\n💡 Saran:');
-      console.log('1. Coba login ulang: npx netlify login');
-      console.log('2. Inisialisasi ulang: npx netlify init');
-      console.log('3. Deploy manual melalui dashboard Netlify dengan folder "out"');
+      // Tanya apakah ingin melanjutkan meskipun ada error
+      const response = await askQuestion('⚠️ Langkah gagal. Lanjutkan proses? (y/N): ');
       
-      return false;
+      if (response.toLowerCase() !== 'y') {
+        log.error('Deployment dibatalkan oleh pengguna.');
+        process.exit(1);
+      }
     }
   }
-};
+  
+  if (success) {
+    log.bold.green('\n🎉 Semua langkah deployment berhasil!');
+    log.success('Website telah di-deploy ke Netlify.');
+  } else {
+    log.bold.yellow('\n⚠️ Deployment selesai dengan beberapa masalah.');
+    log.warning('Periksa pesan error di atas dan perbaiki jika diperlukan.');
+  }
+}
 
-// Fungsi utama
-const main = () => {
-  console.log('=== Deploy Manual ke Netlify ===');
-  
-  // Verifikasi direktori output
-  if (!checkOutputDirectory()) {
-    process.exit(1);
-  }
-  
-  // Perbaiki index.html
-  if (!fixIndexHtml()) {
-    console.log('⚠️ Lanjut meskipun ada masalah dengan index.html...');
-  }
-  
-  // Dapatkan Netlify Site ID
-  const siteId = getNetlifySiteId();
-  console.log(`Menggunakan Netlify Site ID: ${siteId}`);
-  
-  // Jalankan deployment
-  if (!runDeployment(siteId)) {
-    process.exit(1);
-  }
-};
-
-// Mulai eksekusi
+// Jalankan fungsi utama
 main(); 

@@ -4,6 +4,7 @@ import LoadingScreen from "@/components/loading-screen"
 // Import client components yang menangani dynamic imports
 import ClientHeroSection from "./components/client-hero-section"
 import ClientSkillsChart from "./components/client-skills-chart"
+import ClientTerminal from "./components/client-terminal"
 
 // Regular imports for non-WebGL components
 import ServicesSection from "@/components/services-section"
@@ -45,6 +46,11 @@ export default function Home() {
       <PremiumAchievements />
       <ProfessionalValues />
       <ContactSection />
+      
+      {/* Terminal Linux Floating */}
+      <Suspense fallback={null}>
+        <ClientTerminal />
+      </Suspense>
     </React.Fragment>
   )
 }

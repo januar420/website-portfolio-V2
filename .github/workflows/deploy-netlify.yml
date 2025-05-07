@@ -1,3 +1,7 @@
+# File workflow ini telah diperbarui secara otomatis oleh script
+# Netlify Site ID: 05986322-27d2-402a-a2cc-ec8c52d44aeb
+# Netlify Auth Token: [SENSITIVE] - Harap atur di GitHub repository secrets
+# Terakhir diperbarui: 2025-05-07T17:27:38.091Z
 # DEPRECATED: File ini tidak lagi direkomendasikan untuk digunakan.
 # Gunakan netlify-deploy.yml sebagai gantinya, yang menggunakan metode build:netlify.
 # Lihat README.md untuk informasi lebih lanjut.

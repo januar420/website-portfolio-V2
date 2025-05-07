@@ -90,6 +90,40 @@ try {
     removedCount += depsRemoved;
   }
   
+  // Perbaiki versi esbuild (tambahkan kode ini)
+  console.log('🔧 Memperbaiki versi esbuild di package-lock.json...');
+  
+  if (packageLock.packages && packageLock.packages['node_modules/esbuild']) {
+    packageLock.packages['node_modules/esbuild'].version = '0.18.20';
+    console.log('✅ Versi esbuild diperbarui di packages');
+  }
+  
+  if (packageLock.dependencies && packageLock.dependencies.esbuild) {
+    packageLock.dependencies.esbuild.version = '0.18.20';
+    console.log('✅ Versi esbuild diperbarui di dependencies');
+  }
+  
+  // Hapus semua @esbuild/* dependencies yang mungkin menyebabkan konflik
+  if (packageLock.packages) {
+    Object.keys(packageLock.packages).forEach(pkg => {
+      if (pkg.includes('@esbuild/')) {
+        console.log(`🗑️ Menghapus @esbuild dependency: ${pkg}`);
+        delete packageLock.packages[pkg];
+        removedCount++;
+      }
+    });
+  }
+  
+  if (packageLock.dependencies) {
+    Object.keys(packageLock.dependencies).forEach(dep => {
+      if (dep.includes('@esbuild/')) {
+        console.log(`🗑️ Menghapus @esbuild dependency: ${dep}`);
+        delete packageLock.dependencies[dep];
+        removedCount++;
+      }
+    });
+  }
+  
   // Tulis kembali package-lock.json
   fs.writeFileSync(packageLockPath, JSON.stringify(packageLock, null, 2));
   

@@ -1,153 +1,187 @@
 /**
- * Script untuk melakukan patching langsung ke node_modules untuk memperbaiki 
- * masalah Promise.withResolvers di lingkungan build GitHub Actions
+ * Script untuk melakukan patching langsung pada node_modules
+ * Ini dapat memperbaiki masalah yang tidak bisa diselesaikan dengan overrides
  */
 
 const fs = require('fs');
 const path = require('path');
-const childProcess = require('child_process');
 
-console.log('🔧 Direct patching untuk dependencies...');
+console.log('🔧 Melakukan patching langsung pada node_modules...');
 
-/**
- * Mencari file-file di node_modules yang menggunakan Promise.withResolvers
- */
-function findFilesWithPattern() {
-  try {
-    console.log('🔍 Mencari file dengan penggunaan Promise.withResolvers...');
+// Fungsi untuk menemukan semua file yang cocok dengan pola
+function findFiles(dir, pattern, callback, ignored = []) {
+  if (!fs.existsSync(dir)) return;
+  
+  const files = fs.readdirSync(dir);
+  
+  for (const file of files) {
+    const filePath = path.join(dir, file);
     
-    // Jalankan grep untuk menemukan file
-    const result = childProcess.execSync(
-      'grep -r "Promise.withResolvers" --include="*.js" --include="*.ts" --include="*.jsx" --include="*.tsx" ./node_modules',
-      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }
-    );
-    
-    // Ekstrak path file
-    const files = result.split('\n')
-      .filter(line => line.trim() !== '')
-      .map(line => {
-        const colonIndex = line.indexOf(':');
-        return line.substring(0, colonIndex);
-      })
-      .filter((value, index, self) => self.indexOf(value) === index); // unique values
-    
-    console.log(`✅ Ditemukan ${files.length} file yang menggunakan Promise.withResolvers`);
-    return files;
-  } catch (error) {
-    console.error('❌ Error saat mencari file:', error.message);
-    // Jika grep tidak menemukan apa-apa
-    return [];
-  }
-}
-
-/**
- * Memperbaiki file dengan mengganti Promise.withResolvers
- */
-function patchFile(filePath) {
-  try {
-    console.log(`🔧 Memperbaiki file: ${filePath}`);
-    
-    // Baca file
-    const content = fs.readFileSync(filePath, 'utf8');
-    
-    // Ganti Promise.withResolvers dengan implementasi inline
-    const patchedContent = content.replace(
-      /Promise\.withResolvers\(\)/g,
-      `(function() { 
-        let _resolve, _reject;
-        const _promise = new Promise(function(res, rej) {
-          _resolve = res;
-          _reject = rej;
-        });
-        return { promise: _promise, resolve: _resolve, reject: _reject };
-      })()`
-    );
-    
-    // Tulis file
-    fs.writeFileSync(filePath, patchedContent, 'utf8');
-    
-    console.log(`✅ Berhasil memperbaiki file: ${filePath}`);
-    return true;
-  } catch (error) {
-    console.error(`❌ Error saat memperbaiki file ${filePath}:`, error.message);
-    return false;
-  }
-}
-
-/**
- * Memperbaiki semua versi pdfjs-dist
- */
-function patchPdfjsDist() {
-  try {
-    const pdfjsPath = path.join('node_modules', 'pdfjs-dist');
-    
-    if (!fs.existsSync(pdfjsPath)) {
-      console.log('⚠️ Package pdfjs-dist tidak ditemukan, melanjutkan...');
-      return 0;
+    // Skip ignored directories
+    if (ignored.some(ignoredPath => filePath.includes(ignoredPath))) {
+      continue;
     }
     
-    console.log('🔧 Memperbaiki package pdfjs-dist...');
+    const stat = fs.statSync(filePath);
     
-    // Mencari file PDF.js yang berisi Promise.withResolvers
-    const pdfjsFiles = findFilesWithPattern();
-    
-    let patchedCount = 0;
-    for (const file of pdfjsFiles) {
-      if (file.includes('pdfjs-dist') || file.includes('react-pdf')) {
-        if (patchFile(file)) {
-          patchedCount++;
+    if (stat.isDirectory()) {
+      findFiles(filePath, pattern, callback, ignored);
+    } else if (pattern.test(file)) {
+      callback(filePath);
+    }
+  }
+}
+
+// Tambahkan polyfill Promise.withResolvers ke file JavaScript
+function addPolyfillToJsFiles() {
+  console.log('📝 Menambahkan polyfill Promise.withResolvers ke file yang membutuhkannya...');
+  
+  const targetFiles = [
+    // PDF.js worker files
+    /pdf\.worker.*\.js$/,
+    // React fiber related files
+    /react-reconciler.*\.js$/,
+    // Three.js files
+    /three.*\.module\.js$/
+  ];
+  
+  const polyfillCode = `
+// Polyfill untuk Promise.withResolvers
+if (typeof Promise.withResolvers !== 'function') {
+  Promise.withResolvers = function withResolvers() {
+    let resolve, reject;
+    const promise = new Promise(function(res, rej) {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+}
+`;
+  
+  const nodeModulesDir = path.join(__dirname, '..', 'node_modules');
+  const ignoredDirs = ['.cache', '.git', '.next', 'dist', 'build'];
+  
+  let modifiedCount = 0;
+  
+  for (const pattern of targetFiles) {
+    findFiles(nodeModulesDir, pattern, (filePath) => {
+      try {
+        let content = fs.readFileSync(filePath, 'utf8');
+        
+        // Periksa apakah file menggunakan Promise.withResolvers
+        if (content.includes('Promise.withResolvers') && !content.includes('function withResolvers()')) {
+          console.log(`🔍 Menemukan penggunaan Promise.withResolvers di: ${path.relative(nodeModulesDir, filePath)}`);
+          
+          // Tambahkan polyfill di awal file
+          content = polyfillCode + content;
+          
+          fs.writeFileSync(filePath, content);
+          modifiedCount++;
+          console.log(`✅ Berhasil menambahkan polyfill ke: ${path.relative(nodeModulesDir, filePath)}`);
         }
+      } catch (error) {
+        console.error(`❌ Error saat modifikasi ${filePath}:`, error.message);
       }
-    }
-    
-    console.log(`📊 Total ${patchedCount} file pdfjs-dist telah diperbaiki`);
-    return patchedCount;
-  } catch (error) {
-    console.error('❌ Error saat memperbaiki pdfjs-dist:', error.message);
-    return 0;
+    }, ignoredDirs);
   }
+  
+  console.log(`🎉 Selesai: ${modifiedCount} file dimodifikasi dengan polyfill Promise.withResolvers`);
 }
 
-/**
- * Implementasi global Promise.withResolvers
- */
-function applyGlobalPolyfill() {
-  try {
-    if (typeof Promise.withResolvers !== 'function') {
-      Promise.withResolvers = function() {
-        let resolve, reject;
-        const promise = new Promise(function(res, rej) {
-          resolve = res;
-          reject = rej;
-        });
-        return { promise, resolve, reject };
-      };
-      console.log('✅ Promise.withResolvers polyfill global berhasil diterapkan');
-      return true;
-    } else {
-      console.log('ℹ️ Promise.withResolvers sudah tersedia di global scope');
-      return false;
+// Perbaiki versi esbuild dalam file package.json di node_modules
+function fixEsbuildVersions() {
+  console.log('🔧 Memperbaiki versi esbuild di semua package.json...');
+  
+  const pattern = /package\.json$/;
+  const nodeModulesDir = path.join(__dirname, '..', 'node_modules');
+  const targetVersion = '0.18.20'; // Target version yang diinginkan
+  
+  let modifiedCount = 0;
+  
+  findFiles(nodeModulesDir, pattern, (filePath) => {
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      
+      let modified = false;
+      
+      // Cek dan perbaiki di dependencies
+      if (packageJson.dependencies && packageJson.dependencies.esbuild) {
+        packageJson.dependencies.esbuild = targetVersion;
+        modified = true;
+      }
+      
+      // Cek dan perbaiki di devDependencies
+      if (packageJson.devDependencies && packageJson.devDependencies.esbuild) {
+        packageJson.devDependencies.esbuild = targetVersion;
+        modified = true;
+      }
+      
+      // Cek dan perbaiki di peerDependencies
+      if (packageJson.peerDependencies && packageJson.peerDependencies.esbuild) {
+        packageJson.peerDependencies.esbuild = targetVersion;
+        modified = true;
+      }
+      
+      // Tulis kembali package.json jika dimodifikasi
+      if (modified) {
+        fs.writeFileSync(filePath, JSON.stringify(packageJson, null, 2));
+        modifiedCount++;
+        console.log(`✅ Memperbarui versi esbuild di: ${path.relative(nodeModulesDir, filePath)}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error saat memperbaiki ${filePath}:`, error.message);
     }
-  } catch (error) {
-    console.error('❌ Error saat menerapkan polyfill global:', error.message);
-    return false;
-  }
+  });
+  
+  console.log(`🎉 Selesai: ${modifiedCount} package.json diperbarui dengan versi esbuild ${targetVersion}`);
 }
 
-/**
- * Fungsi utama
- */
-function main() {
-  console.log('=== Direct Patching untuk Dependencies ===');
+// Perbaiki @rollup dependencies
+function fixRollupDependencies() {
+  console.log('🔧 Memperbaiki dependensi @rollup di node_modules...');
   
-  // Terapkan polyfill global
-  applyGlobalPolyfill();
+  const pattern = /package\.json$/;
+  const nodeModulesDir = path.join(__dirname, '..', 'node_modules');
+  const targetRollupVersion = '4.9.5'; // Target version yang diinginkan
   
-  // Patch pdfjs-dist
-  const patchedCount = patchPdfjsDist();
+  let modifiedCount = 0;
   
-  console.log(`🎉 Proses selesai. Total ${patchedCount} file berhasil diperbaiki.`);
+  findFiles(nodeModulesDir, pattern, (filePath) => {
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      
+      let modified = false;
+      
+      // Cek dan perbaiki semua dependencies terkait rollup
+      ['dependencies', 'devDependencies', 'peerDependencies'].forEach(depType => {
+        if (packageJson[depType]) {
+          Object.keys(packageJson[depType]).forEach(dep => {
+            if (dep.startsWith('@rollup/rollup-')) {
+              packageJson[depType][dep] = targetRollupVersion;
+              modified = true;
+            }
+          });
+        }
+      });
+      
+      // Tulis kembali package.json jika dimodifikasi
+      if (modified) {
+        fs.writeFileSync(filePath, JSON.stringify(packageJson, null, 2));
+        modifiedCount++;
+        console.log(`✅ Memperbarui versi @rollup di: ${path.relative(nodeModulesDir, filePath)}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error saat memperbaiki ${filePath}:`, error.message);
+    }
+  });
+  
+  console.log(`🎉 Selesai: ${modifiedCount} package.json diperbarui dengan versi @rollup ${targetRollupVersion}`);
 }
 
-// Jalankan fungsi utama
-main(); 
+// Jalankan semua fungsi patching
+addPolyfillToJsFiles();
+fixEsbuildVersions();
+fixRollupDependencies();
+
+console.log('🎉 Patching langsung ke node_modules selesai!'); 

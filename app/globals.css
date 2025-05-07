@@ -436,3 +436,76 @@ body.is-mobile-device [data-section="education"] {
   }
 }
 
+/* Terminal Glow Effect */
+.glow-terminal {
+  box-shadow: 0 0 15px rgba(74, 222, 128, 0.15), 0 0 5px rgba(74, 222, 128, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-terminal:hover {
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.25), 0 0 10px rgba(74, 222, 128, 0.15);
+}
+
+/* Terminal Drag Handle */
+.drag-handle {
+  cursor: move;
+  user-select: none;
+}
+
+/* Terminal Animation */
+.animate-gradient-slow {
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes rotate-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-rotate-slow {
+  animation: rotate-slow 15s linear infinite;
+}
+
+/* Terminal Mobile Optimizations */
+@media (max-width: 640px) {
+  .simplified-bg {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3)) !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  
+  .disable-animation {
+    animation: none !important;
+  }
+  
+  .reduce-motion {
+    transition: none !important;
+  }
+  
+  .can-disable-on-mobile {
+    display: none !important;
+  }
+  
+  .mobile-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+}
+

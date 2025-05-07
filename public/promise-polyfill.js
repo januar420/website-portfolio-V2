@@ -1,33 +1,96 @@
 /**
- * Polyfill untuk Promise.withResolvers
- * 
- * Diperlukan untuk kompatibilitas PDF.js di browser yang lebih lama
- * Implementasi sederhana dari Promise.withResolvers()
+ * Script untuk menambahkan polyfill Promise.withResolvers ke Node.js
+ * Digunakan untuk build process di lingkungan GitHub Actions 
  */
-(function() {
-  if (typeof Promise === 'undefined') {
-    console.warn('Promise tidak tersedia di browser ini!');
-    return;
-  }
 
-  if (Promise.withResolvers) {
-    console.log('Promise.withResolvers sudah tersedia!');
-    return;
-  }
+'use strict';
 
-  // Implementasi Promise.withResolvers jika tidak tersedia
-  Promise.withResolvers = function() {
-    var resolve, reject;
-    var promise = new Promise(function(_resolve, _reject) {
-      resolve = _resolve;
-      reject = _reject;
-    });
-    return {
-      promise: promise,
-      resolve: resolve,
-      reject: reject
-    };
-  };
+console.log('🔧 Menambahkan polyfill untuk Promise.withResolvers...');
+
+// Patch global Promise object di Node.js
+if (typeof Promise.withResolvers !== 'function') {
+  // Definisi polyfill yang kompatibel dengan semua versi Node.js
+  Object.defineProperty(Promise, 'withResolvers', {
+    configurable: true,
+    writable: true,
+    value: function withResolvers() {
+      let resolve, reject;
+      const promise = new Promise(function(res, rej) {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+  });
   
-  console.log('Promise.withResolvers polyfill telah diterapkan!');
-})(); 
+  console.log('✅ Promise.withResolvers polyfill berhasil ditambahkan dengan Object.defineProperty');
+  
+  // Verifikasi polyfill berfungsi
+  try {
+    const { promise, resolve } = Promise.withResolvers();
+    resolve('test');
+    promise.then(() => {
+      console.log('✅ Polyfill berfungsi dengan benar');
+    });
+  } catch (error) {
+    console.error('❌ Error pada polyfill:', error);
+    
+    // Fallback jika defineProperty tidak berhasil
+    console.log('⚠️ Mencoba metode polyfill alternatif...');
+    Promise.withResolvers = function withResolvers() {
+      let resolve, reject;
+      const promise = new Promise(function(res, rej) {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    };
+    
+    // Verifikasi lagi
+    try {
+      const { promise, resolve } = Promise.withResolvers();
+      resolve('test-fallback');
+      promise.then(() => {
+        console.log('✅ Polyfill alternatif berfungsi dengan benar');
+      });
+    } catch (e) {
+      console.error('❌ Kedua metode polyfill gagal:', e);
+      process.exit(1);
+    }
+  }
+} else {
+  console.log('ℹ️ Promise.withResolvers sudah tersedia, tidak perlu polyfill');
+}
+
+// Tambahkan ke global jika berjalan di browser-like environment
+if (typeof window !== 'undefined' && typeof window.Promise === 'function' && 
+    typeof window.Promise.withResolvers !== 'function') {
+  Object.defineProperty(window.Promise, 'withResolvers', {
+    configurable: true,
+    writable: true,
+    value: Promise.withResolvers
+  });
+  console.log('✅ Promise.withResolvers polyfill ditambahkan ke window.Promise');
+}
+
+// Ekspor polyfill dan fungsi utilitas
+module.exports = {
+  installPromisePolyfill() {
+    return typeof Promise.withResolvers === 'function';
+  },
+  
+  // Mengekspos fungsi withResolvers langsung jika diperlukan
+  withResolvers: function() {
+    if (typeof Promise.withResolvers === 'function') {
+      return Promise.withResolvers();
+    }
+    
+    // Fallback implementasi
+    let resolve, reject;
+    const promise = new Promise(function(res, rej) {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+}; 
