@@ -47,7 +47,7 @@ const certifications = [
       id: "Sertifikasi profesional dalam praktik keamanan jaringan yang mencakup prinsip-prinsip dasar keamanan jaringan, protokol, dan teknik-teknik perlindungan infrastruktur jaringan. Sertifikasi ini memvalidasi keahlian dalam mengimplementasikan dan memelihara lingkungan jaringan yang aman."
     },
     issuedBy: "The SecOps Group",
-    date: "20 January, 2025",
+    date: "20 January, 2024",
     thumbnail: "/placeholder.svg",
     imageSrc: "/images/certifications/high-quality/cnsp.jpg",
     highlights: ["Network Defense Strategies", "Security Protocol Implementation", "Threat Analysis", "Infrastructure Protection"],
@@ -63,7 +63,7 @@ const certifications = [
       id: "Sertifikat keahlian dalam dasar-dasar dan implementasi keamanan siber yang fokus pada perlindungan sistem, aplikasi, dan infrastruktur TI dari berbagai ancaman keamanan. Sertifikasi yang diakui secara global ini menunjukkan kemahiran dalam konsep dan praktik inti keamanan siber."
     },
     issuedBy: "(ISC)²",
-    date: "20 January, 2025",
+    date: "20 January, 2024",
     thumbnail: "/placeholder.svg",
     imageSrc: "/images/certifications/high-quality/cybersecurity.jpg",
     highlights: ["Cybersecurity Fundamentals", "Risk Management", "Security Best Practices", "Compliance Standards"],
@@ -79,7 +79,7 @@ const certifications = [
       id: "Sertifikasi penyelesaian kursus keamanan siber yang mencakup prinsip-prinsip fundamental dalam mengidentifikasi, mencegah, dan menanggapi ancaman keamanan siber. Sertifikat ini mengakui penyelesaian yang berhasil dari pelatihan komprehensif dalam dasar-dasar keamanan siber."
     },
     issuedBy: "(ISC)²",
-    date: "20 January, 2025",
+    date: "20 January, 2024",
     thumbnail: "/placeholder.svg",
     imageSrc: "/images/certifications/high-quality/course-conclusion.jpg",
     highlights: ["Comprehensive Assessment", "Security Awareness", "Practical Knowledge", "Threat Recognition"],

@@ -112,7 +112,7 @@ const continuousGrowthContent = {
   descriptionKey: "growth.description",
   defaultDescription: "My commitment to excellence is reflected in a consistent track record of achievement and growth. Through dedicated self-learning, practical application, and a passion for technology, I've developed a comprehensive skill set that enables me to deliver exceptional results.",
   updatedDateKey: "growth.lastUpdated",
-  defaultUpdatedDate: "Last updated: March 2025",
+  defaultUpdatedDate: "Last updated: March 2024",
   rateKey: "growth.successRate",
   defaultRate: "Success Rate",
   rateValueKey: "growth.rateValue",

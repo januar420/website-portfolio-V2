@@ -187,7 +187,7 @@ const baseTranslations: TranslationsType = {
     "achievements.delivery.detail4": "Quality assurance and thorough testing before delivery",
     "growth.title": "Continuous Professional Growth",
     "growth.description": "My commitment to excellence is reflected in a consistent track record of achievement and growth. Through dedicated self-learning, practical application, and a passion for technology, I've developed a comprehensive skill set that enables me to deliver exceptional results.",
-    "growth.lastUpdated": "Last updated: March 2025",
+    "growth.lastUpdated": "Last updated: March 2024",
     "growth.successRate": "Success Rate",
     "growth.rateValue": "90%",
     "growth.quickNotes": "Professional Focus Areas",

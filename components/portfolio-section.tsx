@@ -491,16 +491,25 @@ export default function PortfolioSection() {
                             >
                               {t("portfolio.viewProject")}
                             </Button>
-                            <Button
-                              variant="outline"
-                              className="rounded-full border-primary/30 hover:border-primary/60 shadow-sm hover:shadow-md transition-all duration-300"
-                              asChild
-                            >
-                              <a href={project.link} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                {t("portfolio.liveDemo")}
-                              </a>
-                            </Button>
+                            {project.link ? (
+                              <Button
+                                variant="outline"
+                                className="rounded-full border-primary/30 hover:border-primary/60 shadow-sm hover:shadow-md transition-all duration-300"
+                                asChild
+                              >
+                                <a href={project.link} target="_blank" rel="noopener noreferrer">
+                                  {t("portfolio.liveDemo")} <ExternalLink className="ml-2 h-4 w-4" />
+                                </a>
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                className="rounded-full border-primary/30 hover:border-primary/60 shadow-sm hover:shadow-md transition-all duration-300"
+                                disabled
+                              >
+                                {t("portfolio.liveDemo")} <ExternalLink className="ml-2 h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>

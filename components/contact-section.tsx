@@ -17,10 +17,10 @@ import EmailInitializer from "./email-initializer"
 
 // Define form schema dengan validasi
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Nama minimal 2 karakter" }),
-  email: z.string().email({ message: "Email tidak valid" }),
-  subject: z.string().min(5, { message: "Subjek minimal 5 karakter" }),
-  message: z.string().min(10, { message: "Pesan minimal 10 karakter" }),
+  name: z.string().min(2, { message: "Nama harus minimal 2 karakter" }),
+  email: z.string().email({ message: "Format email tidak valid" }),
+  subject: z.string().min(5, { message: "Subjek harus minimal 5 karakter" }),
+  message: z.string().min(10, { message: "Pesan harus minimal 10 karakter" }),
 })
 
 export default function ContactSection() {
