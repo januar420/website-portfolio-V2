@@ -28,32 +28,55 @@ try {
   }
 }
 
-// Mengatur token Netlify secara lokal
+// Membuat folder .netlify jika belum ada
+const netlifyConfigDir = path.join(process.env.HOME || process.env.USERPROFILE, '.netlify');
+if (!fs.existsSync(netlifyConfigDir)) {
+  fs.mkdirSync(netlifyConfigDir, { recursive: true });
+}
+
+// Menyimpan token secara manual ke file konfigurasi
+console.log('Menyimpan token Netlify ke file konfigurasi...');
 try {
-  console.log('Mengatur Netlify auth token...');
-  execSync(`netlify auth:set ${NETLIFY_AUTH_TOKEN}`, { stdio: 'pipe' });
+  // Tulis ke file auth-token
+  fs.writeFileSync(path.join(netlifyConfigDir, 'config.json'), JSON.stringify({
+    userId: "netlify-user",
+    users: {
+      "netlify-user": {
+        auth: {
+          token: NETLIFY_AUTH_TOKEN
+        }
+      }
+    }
+  }, null, 2));
+  
   console.log('✅ Token Netlify berhasil dikonfigurasi');
   
   // Mencoba mendapatkan info akun untuk verifikasi
   console.log('Memverifikasi token...');
-  const accountInfo = execSync('netlify api getUser', { encoding: 'utf8' });
-  console.log('✅ Token valid! Login berhasil.');
-  
-  const accountData = JSON.parse(accountInfo);
-  console.log(`🔵 Login sebagai: ${accountData.full_name || accountData.email}`);
-  
-  // Mendapatkan dan menampilkan daftar situs
-  console.log('\n📋 Daftar situs Netlify tersedia:');
-  const sites = JSON.parse(execSync('netlify api listSites', { encoding: 'utf8' }));
-  
-  if (sites && sites.length > 0) {
-    sites.forEach((site, index) => {
-      console.log(`${index + 1}. ${site.name} (${site.url})`);
-      console.log(`   ID: ${site.id}`);
-      console.log(`   Tambahkan ID ini ke NETLIFY_SITE_ID di GitHub secrets\n`);
-    });
-  } else {
-    console.log('Tidak ada situs yang ditemukan di akun Anda.');
+  try {
+    const accountInfo = execSync('netlify api getCurrentUser', { encoding: 'utf8' });
+    console.log('✅ Token valid! Login berhasil.');
+    
+    const accountData = JSON.parse(accountInfo);
+    console.log(`🔵 Login sebagai: ${accountData.full_name || accountData.email}`);
+    
+    // Mendapatkan dan menampilkan daftar situs
+    console.log('\n📋 Daftar situs Netlify tersedia:');
+    const sites = JSON.parse(execSync('netlify api listSites', { encoding: 'utf8' }));
+    
+    if (sites && sites.length > 0) {
+      sites.forEach((site, index) => {
+        console.log(`${index + 1}. ${site.name} (${site.url})`);
+        console.log(`   ID: ${site.id}`);
+        console.log(`   Tambahkan ID ini ke NETLIFY_SITE_ID di GitHub secrets\n`);
+      });
+    } else {
+      console.log('Tidak ada situs yang ditemukan di akun Anda.');
+    }
+  } catch (apiError) {
+    console.error('❌ Gagal memverifikasi token:', apiError.message);
+    console.log('Anda mungkin perlu menjalankan perintah berikut secara manual:');
+    console.log(`netlify login`);
   }
   
   console.log('\n✅ Setup selesai. Anda sekarang dapat menjalankan:');
