@@ -52,11 +52,12 @@ async function main() {
     
     // Membuat situs baru menggunakan Netlify API dengan format JSON yang benar
     const siteConfig = JSON.stringify({ name: finalSiteName, ssl: true });
-    // Untuk Windows, gunakan tanda kutip ganda di luar dan gunakan writeFileSync/tempFile
-    const tempDataFile = path.join(__dirname, 'temp-site-config.json');
-    fs.writeFileSync(tempDataFile, siteConfig);
     
-    const createSiteCommand = `netlify api createSite --data-file "${tempDataFile}"`;
+    // Cara untuk Windows - gunakan JSON.stringify dua kali untuk menghindari masalah escape karakter
+    const jsonData = JSON.stringify(siteConfig).slice(1, -1);
+    const createSiteCommand = `netlify api createSite --data "${jsonData}"`;
+    console.log(`Menjalankan: ${createSiteCommand}`);
+    
     const siteData = JSON.parse(execSync(createSiteCommand, { encoding: 'utf8' }));
     
     console.log('\n✅ Situs berhasil dibuat!');
@@ -102,11 +103,6 @@ async function main() {
     console.error('❌ Gagal membuat situs Netlify:', error.message);
     process.exit(1);
   } finally {
-    // Membersihkan file temporary
-    const tempDataFile = path.join(__dirname, 'temp-site-config.json');
-    if (fs.existsSync(tempDataFile)) {
-      fs.unlinkSync(tempDataFile);
-    }
     rl.close();
   }
 }
