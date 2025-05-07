@@ -1,3 +1,7 @@
+# File workflow ini telah diperbarui secara otomatis oleh script
+# Netlify Site ID: 05986322-27d2-402a-a2cc-ec8c52d44aeb
+# Netlify Auth Token: [SENSITIVE] - Harap atur di GitHub repository secrets
+# Terakhir diperbarui: 2025-05-07T17:27:38.089Z
 name: Deploy Lengkap ke Netlify
 
 on:
