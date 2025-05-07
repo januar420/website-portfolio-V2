@@ -50,7 +50,8 @@
     "deploy:all": "npm run clean && npm run fix-netlify && npm run deploy:netlify-manual && npm run deploy:gh-pages",
     "setup-netlify": "node scripts/setup-netlify-token.js",
     "setup-github-secrets": "node scripts/setup-github-secrets.js",
-    "setup-deployment": "node scripts/setup-deployment.js"
+    "setup-deployment": "node scripts/setup-deployment.js",
+    "create-netlify-site": "node scripts/create-netlify-site.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
