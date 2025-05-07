@@ -47,7 +47,10 @@
     "deploy:netlify-manual": "npm run fix-netlify && node scripts/deploy-netlify-manual.js",
     "netlify": "npm run init-netlify && npm run deploy:netlify",
     "init-github": "node scripts/init-github.js",
-    "deploy:all": "npm run clean && npm run fix-netlify && npm run deploy:netlify-manual && npm run deploy:gh-pages"
+    "deploy:all": "npm run clean && npm run fix-netlify && npm run deploy:netlify-manual && npm run deploy:gh-pages",
+    "setup-netlify": "node scripts/setup-netlify-token.js",
+    "setup-github-secrets": "node scripts/setup-github-secrets.js",
+    "setup-deployment": "node scripts/setup-deployment.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
