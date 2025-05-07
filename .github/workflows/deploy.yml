@@ -23,7 +23,7 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [20.x]
     
     steps:
       - name: Checkout repository
@@ -53,61 +53,16 @@ jobs:
           EOF
           cat .npmrc
       
+      - name: Remove package-lock.json
+        run: rm -f package-lock.json
+      
       - name: Apply Promise.withResolvers polyfill globally
         run: |
           node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
       
-      - name: Clean rollup dependencies in package-lock.json
-        run: |
-          echo "Removing problematic dependencies from package-lock.json..."
-          node -e "
-            const fs = require('fs');
-            const lockFile = './package-lock.json';
-            if (fs.existsSync(lockFile)) {
-              const pkg = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
-              
-              // Remove problematic dependencies from packages
-              if (pkg.packages) {
-                Object.keys(pkg.packages).forEach(p => {
-                  if (p.includes('@rollup/rollup-android') || 
-                      p.includes('@rollup/rollup-arm') ||
-                      p.includes('fsevents') ||
-                      p.includes('rollup-android')) {
-                    console.log('Removing ' + p);
-                    delete pkg.packages[p];
-                  }
-                });
-              }
-              
-              // Remove from dependencies section
-              if (pkg.dependencies) {
-                Object.keys(pkg.dependencies).forEach(d => {
-                  if (d.includes('@rollup/rollup-android') || 
-                      d.includes('@rollup/rollup-arm') ||
-                      d.includes('fsevents') ||
-                      d.includes('rollup-android')) {
-                    console.log('Removing dependency ' + d);
-                    delete pkg.dependencies[d];
-                  }
-                });
-              }
-              
-              fs.writeFileSync(lockFile, JSON.stringify(pkg, null, 2));
-              console.log('Successfully cleaned package-lock.json');
-            } else {
-              console.log('package-lock.json not found');
-            }
-          "
-      
-      - name: Create .yarnrc (fallback for Yarn)
-        run: |
-          echo "ignore-platform true" > .yarnrc
-          echo "ignore-engines true" >> .yarnrc
-          echo "ignore-optional true" >> .yarnrc
-          cat .yarnrc
-      
       - name: Install dependencies with explicit options
         run: |
+          echo "Menginstall dependensi dengan fallback untuk legacy peers jika perlu..."
           npm install --omit=optional --no-optional --ignore-scripts --no-fund --no-audit --ignore-platform --force
         env:
           NODE_OPTIONS: "--max_old_space_size=8192 --no-warnings"
@@ -117,8 +72,54 @@ jobs:
           npm_config_target_arch: "x64"
           npm_config_target_libc: "glibc"
       
+      - name: Create .yarnrc (fallback for Yarn)
+        run: |
+          echo "ignore-platform true" > .yarnrc
+          echo "ignore-engines true" >> .yarnrc
+          echo "ignore-optional true" >> .yarnrc
+          cat .yarnrc
+      
       - name: Fix platform-specific dependencies
         run: node scripts/platform-fix.js
+      
+      - name: Fix esbuild version in lockfile
+        run: |
+          echo "Fixing esbuild version in package-lock.json..."
+          node -e "
+            const fs = require('fs');
+            const packageJson = JSON.parse(fs.readFileSync('./package.json'));
+            const lockFile = './package-lock.json';
+            
+            if (fs.existsSync(lockFile)) {
+              const lock = JSON.parse(fs.readFileSync(lockFile));
+              if (lock.packages && lock.packages['node_modules/esbuild']) {
+                lock.packages['node_modules/esbuild'].version = '0.18.20';
+              }
+              if (lock.dependencies && lock.dependencies.esbuild) {
+                lock.dependencies.esbuild.version = '0.18.20';
+              }
+              
+              // Remove any @esbuild/* dependencies
+              if (lock.packages) {
+                Object.keys(lock.packages).forEach(pkg => {
+                  if (pkg.includes('@esbuild/')) {
+                    delete lock.packages[pkg];
+                  }
+                });
+              }
+              
+              if (lock.dependencies) {
+                Object.keys(lock.dependencies).forEach(dep => {
+                  if (dep.includes('@esbuild/')) {
+                    delete lock.dependencies[dep];
+                  }
+                });
+              }
+              
+              fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2));
+              console.log('Successfully fixed esbuild version in package-lock.json');
+            }
+          "
       
       - name: Patch dependency files
         run: npm run pre-build
@@ -156,7 +157,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
           cache: 'npm'
       
       - name: Create comprehensive .npmrc
@@ -176,54 +177,16 @@ jobs:
           unsafe-perm=true
           EOF
       
+      - name: Remove package-lock.json
+        run: rm -f package-lock.json
+      
       - name: Apply Promise.withResolvers polyfill globally
         run: |
           node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
       
-      - name: Clean rollup dependencies in package-lock.json
-        run: |
-          echo "Removing problematic dependencies from package-lock.json..."
-          node -e "
-            const fs = require('fs');
-            const lockFile = './package-lock.json';
-            if (fs.existsSync(lockFile)) {
-              const pkg = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
-              
-              // Remove problematic dependencies from packages
-              if (pkg.packages) {
-                Object.keys(pkg.packages).forEach(p => {
-                  if (p.includes('@rollup/rollup-android') || 
-                      p.includes('@rollup/rollup-arm') ||
-                      p.includes('fsevents') ||
-                      p.includes('rollup-android')) {
-                    console.log('Removing ' + p);
-                    delete pkg.packages[p];
-                  }
-                });
-              }
-              
-              // Remove from dependencies section
-              if (pkg.dependencies) {
-                Object.keys(pkg.dependencies).forEach(d => {
-                  if (d.includes('@rollup/rollup-android') || 
-                      d.includes('@rollup/rollup-arm') ||
-                      d.includes('fsevents') ||
-                      d.includes('rollup-android')) {
-                    console.log('Removing dependency ' + d);
-                    delete pkg.dependencies[d];
-                  }
-                });
-              }
-              
-              fs.writeFileSync(lockFile, JSON.stringify(pkg, null, 2));
-              console.log('Successfully cleaned package-lock.json');
-            } else {
-              console.log('package-lock.json not found');
-            }
-          "
-      
       - name: Install dependencies with explicit options
         run: |
+          echo "Menginstall dependensi dengan fallback untuk legacy peers jika perlu..."
           npm install --omit=optional --no-optional --ignore-scripts --no-fund --no-audit --ignore-platform --force
         env:
           NODE_OPTIONS: "--max_old_space_size=8192 --no-warnings"
@@ -235,6 +198,45 @@ jobs:
       
       - name: Fix platform-specific dependencies
         run: node scripts/platform-fix.js
+      
+      - name: Fix esbuild version in lockfile
+        run: |
+          echo "Fixing esbuild version in package-lock.json..."
+          node -e "
+            const fs = require('fs');
+            const packageJson = JSON.parse(fs.readFileSync('./package.json'));
+            const lockFile = './package-lock.json';
+            
+            if (fs.existsSync(lockFile)) {
+              const lock = JSON.parse(fs.readFileSync(lockFile));
+              if (lock.packages && lock.packages['node_modules/esbuild']) {
+                lock.packages['node_modules/esbuild'].version = '0.18.20';
+              }
+              if (lock.dependencies && lock.dependencies.esbuild) {
+                lock.dependencies.esbuild.version = '0.18.20';
+              }
+              
+              // Remove any @esbuild/* dependencies
+              if (lock.packages) {
+                Object.keys(lock.packages).forEach(pkg => {
+                  if (pkg.includes('@esbuild/')) {
+                    delete lock.packages[pkg];
+                  }
+                });
+              }
+              
+              if (lock.dependencies) {
+                Object.keys(lock.dependencies).forEach(dep => {
+                  if (dep.includes('@esbuild/')) {
+                    delete lock.dependencies[dep];
+                  }
+                });
+              }
+              
+              fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2));
+              console.log('Successfully fixed esbuild version in package-lock.json');
+            }
+          "
       
       - name: Restore cached build
         uses: actions/cache@v3
@@ -299,54 +301,16 @@ jobs:
           unsafe-perm=true
           EOF
       
+      - name: Remove package-lock.json
+        run: rm -f package-lock.json
+      
       - name: Apply Promise.withResolvers polyfill globally
         run: |
           node -e "if(typeof Promise.withResolvers !== 'function') { Promise.withResolvers = function() { let r, j; const p = new Promise((resolve, reject) => { r = resolve; j = reject; }); return { promise: p, resolve: r, reject: j }; }; console.log('Polyfill installed!'); }"
       
-      - name: Clean rollup dependencies in package-lock.json
-        run: |
-          echo "Removing problematic dependencies from package-lock.json..."
-          node -e "
-            const fs = require('fs');
-            const lockFile = './package-lock.json';
-            if (fs.existsSync(lockFile)) {
-              const pkg = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
-              
-              // Remove problematic dependencies from packages
-              if (pkg.packages) {
-                Object.keys(pkg.packages).forEach(p => {
-                  if (p.includes('@rollup/rollup-android') || 
-                      p.includes('@rollup/rollup-arm') ||
-                      p.includes('fsevents') ||
-                      p.includes('rollup-android')) {
-                    console.log('Removing ' + p);
-                    delete pkg.packages[p];
-                  }
-                });
-              }
-              
-              // Remove from dependencies section
-              if (pkg.dependencies) {
-                Object.keys(pkg.dependencies).forEach(d => {
-                  if (d.includes('@rollup/rollup-android') || 
-                      d.includes('@rollup/rollup-arm') ||
-                      d.includes('fsevents') ||
-                      d.includes('rollup-android')) {
-                    console.log('Removing dependency ' + d);
-                    delete pkg.dependencies[d];
-                  }
-                });
-              }
-              
-              fs.writeFileSync(lockFile, JSON.stringify(pkg, null, 2));
-              console.log('Successfully cleaned package-lock.json');
-            } else {
-              console.log('package-lock.json not found');
-            }
-          "
-      
       - name: Install dependencies with explicit options
         run: |
+          echo "Menginstall dependensi dengan fallback untuk legacy peers jika perlu..."
           npm install --omit=optional --no-optional --ignore-scripts --no-fund --no-audit --ignore-platform --force
         env:
           NODE_OPTIONS: "--max_old_space_size=8192 --no-warnings"
@@ -358,6 +322,45 @@ jobs:
       
       - name: Fix platform-specific dependencies
         run: node scripts/platform-fix.js
+      
+      - name: Fix esbuild version in lockfile
+        run: |
+          echo "Fixing esbuild version in package-lock.json..."
+          node -e "
+            const fs = require('fs');
+            const packageJson = JSON.parse(fs.readFileSync('./package.json'));
+            const lockFile = './package-lock.json';
+            
+            if (fs.existsSync(lockFile)) {
+              const lock = JSON.parse(fs.readFileSync(lockFile));
+              if (lock.packages && lock.packages['node_modules/esbuild']) {
+                lock.packages['node_modules/esbuild'].version = '0.18.20';
+              }
+              if (lock.dependencies && lock.dependencies.esbuild) {
+                lock.dependencies.esbuild.version = '0.18.20';
+              }
+              
+              // Remove any @esbuild/* dependencies
+              if (lock.packages) {
+                Object.keys(lock.packages).forEach(pkg => {
+                  if (pkg.includes('@esbuild/')) {
+                    delete lock.packages[pkg];
+                  }
+                });
+              }
+              
+              if (lock.dependencies) {
+                Object.keys(lock.dependencies).forEach(dep => {
+                  if (dep.includes('@esbuild/')) {
+                    delete lock.dependencies[dep];
+                  }
+                });
+              }
+              
+              fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2));
+              console.log('Successfully fixed esbuild version in package-lock.json');
+            }
+          "
       
       - name: Restore cached build
         uses: actions/cache@v3

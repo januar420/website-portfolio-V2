@@ -161,7 +161,7 @@
   },
   "license": "ISC",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.18.0"
   },
   "resolutions": {
     "@rollup/rollup-linux-x64-gnu": "4.9.5",
