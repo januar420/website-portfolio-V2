@@ -51,7 +51,8 @@
     "setup-netlify": "node scripts/setup-netlify-token.js",
     "setup-github-secrets": "node scripts/setup-github-secrets.js",
     "setup-deployment": "node scripts/setup-deployment.js",
-    "create-netlify-site": "node scripts/create-netlify-site.js"
+    "create-netlify-site": "node scripts/create-netlify-site.js",
+    "update-github-workflow": "node scripts/update-github-workflow.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
